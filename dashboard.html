@@ -19,7 +19,7 @@
   </div>
   <div class="kpis" id="kpis"></div>
   <div class="panels">
-    <div class="panel"><h3 id="mapTitle"></h3><div id="mapWrap"></div><p class="map-hint">点示意图上的节点，右侧查看该点详情并控制</p></div>
+    <div class="panel"><h3 id="mapTitle"></h3><div id="mapWrap"></div><div class="map-legend"><span><i class="dot ok"></i>正常</span><span><i class="dot warn"></i>告警</span><span><i class="dot bad"></i>故障</span><span><i class="dot off"></i>离线/停止</span></div><p class="map-hint">点示意图上的节点，右侧查看该点详情并控制</p></div>
     <div class="panel"><h3>单点详情与控制</h3><div id="detail"></div></div>
   </div>
   <div class="panel strat-panel"><h3>策略控制</h3><div id="strats"></div><p class="strat-note" id="stratNote"></p></div>
@@ -595,6 +595,62 @@ function statusCls(n) {
   if (n.canToggle && n.on === false) return "off";
   return n.status === "ok" ? "ok" : n.status === "warn" ? "warn" : "bad";
 }
+/* 各场景示意底图：道路 + 厂区/地块（路灯页风格），节点落在上面；航线虚线已去掉 */
+const BASES = {
+  water: { river: true, roads: [{ p: [50, 8, 50, 92], name: "供水干线" }, { p: [8, 55, 92, 55], name: "输水干道" }], zones: [
+    { x: 16, y: 16, w: 28, h: 26, label: "水厂区" }, { x: 60, y: 14, w: 28, h: 26, label: "加压区" },
+    { x: 4, y: 56, w: 26, h: 26, label: "取水区" }, { x: 66, y: 50, w: 28, h: 26, label: "管网区" }, { x: 32, y: 74, w: 28, h: 18, label: "水库区" }] },
+  fire: { roads: [{ p: [8, 48, 92, 48], name: "消防通道" }, { p: [50, 10, 50, 90], name: "陆家嘴环路" }], zones: [
+    { x: 8, y: 12, w: 28, h: 26, label: "金融区" }, { x: 64, y: 12, w: 28, h: 26, label: "超高层建筑群" },
+    { x: 12, y: 58, w: 30, h: 26, label: "商业综合体" }, { x: 64, y: 56, w: 28, h: 26, label: "滨江建筑群" }, { x: 40, y: 78, w: 26, h: 16, label: "交通枢纽" }] },
+  park: { roads: [{ p: [8, 45, 92, 45], name: "园区主干道" }, { p: [50, 10, 50, 90], name: "园区环路" }], zones: [
+    { x: 8, y: 14, w: 28, h: 26, label: "停车场" }, { x: 64, y: 14, w: 28, h: 26, label: "办公楼群" },
+    { x: 14, y: 60, w: 30, h: 26, label: "出入口" }, { x: 64, y: 56, w: 28, h: 26, label: "安防区" }, { x: 42, y: 76, w: 26, h: 16, label: "公共区域" }] },
+  farm: { roads: [{ p: [8, 50, 92, 50], name: "田间主路" }, { p: [50, 10, 50, 90], name: "机耕道" }], zones: [
+    { x: 8, y: 14, w: 28, h: 26, label: "1号温室区", grid: true }, { x: 64, y: 12, w: 28, h: 26, label: "2号温室区", grid: true },
+    { x: 12, y: 58, w: 30, h: 26, label: "大田区", grid: true }, { x: 64, y: 56, w: 28, h: 26, label: "气象监测区" }, { x: 42, y: 76, w: 26, h: 16, label: "喷灌区" }] },
+  community: { roads: [{ p: [8, 45, 92, 45], name: "小区主路" }, { p: [50, 10, 50, 90], name: "小区环路" }], zones: [
+    { x: 8, y: 14, w: 28, h: 26, label: "东区住宅" }, { x: 64, y: 14, w: 28, h: 26, label: "车库区" },
+    { x: 14, y: 58, w: 30, h: 26, label: "2号楼" }, { x: 64, y: 56, w: 28, h: 26, label: "监控区" }, { x: 42, y: 76, w: 26, h: 16, label: "西门" }] },
+  traffic: { roads: [
+    { p: [8, 28, 92, 28], name: "南京东路" }, { p: [8, 45, 92, 45], name: "延安路" }, { p: [8, 71, 92, 71], name: "淮海中路" },
+    { p: [29, 10, 29, 90], name: "西藏中路" }, { p: [55, 10, 55, 90], name: "南北高架" }, { p: [79, 10, 79, 90], name: "陆家嘴环路" }], zones: [] },
+  ship: { circles: [
+    { cx: 15, cy: 25, r: 9, label: "上海港区" }, { cx: 25, cy: 45, r: 9, label: "宁波舟山港区" }, { cx: 85, cy: 70, r: 9, label: "新加坡港区" }], roads: [], zones: [] },
+  company: { roads: [{ p: [8, 45, 92, 45], name: "园区主干道" }, { p: [50, 10, 50, 90], name: "内部通道" }], zones: [
+    { x: 8, y: 14, w: 28, h: 26, label: "访客接待区" }, { x: 64, y: 14, w: 28, h: 26, label: "会议区" },
+    { x: 14, y: 58, w: 30, h: 26, label: "办公区" }, { x: 64, y: 56, w: 28, h: 26, label: "停车区" }, { x: 42, y: 76, w: 26, h: 16, label: "安防区" }] },
+  mine: { roads: [{ p: [8, 45, 92, 45], name: "矿区主干道" }, { p: [50, 10, 50, 90], name: "运煤专线" }], zones: [
+    { x: 8, y: 14, w: 28, h: 26, label: "采煤区" }, { x: 64, y: 12, w: 28, h: 26, label: "监测区" },
+    { x: 14, y: 58, w: 30, h: 26, label: "运输区" }, { x: 64, y: 56, w: 28, h: 26, label: "提升区" }, { x: 42, y: 76, w: 26, h: 16, label: "定位区" }] },
+  oil: { circles: [
+    { cx: 20, cy: 28, r: 8, label: "1号罐组" }, { cx: 78, cy: 26, r: 8, label: "2号罐组" }],
+    roads: [{ p: [8, 45, 92, 45], name: "库区主干道" }, { p: [50, 10, 50, 90], name: "消防通道" }], zones: [
+    { x: 14, y: 58, w: 30, h: 26, label: "装车区" }, { x: 64, y: 56, w: 28, h: 26, label: "消防区" }, { x: 42, y: 76, w: 26, h: 16, label: "监测区" }] },
+  warehouse: { roads: [{ p: [8, 45, 92, 45], name: "园区主干道" }, { p: [50, 10, 50, 90], name: "物流通道" }], zones: [
+    { x: 8, y: 14, w: 28, h: 26, label: "货架区" }, { x: 64, y: 14, w: 28, h: 26, label: "AGV区" },
+    { x: 14, y: 58, w: 30, h: 26, label: "分拣区" }, { x: 64, y: 56, w: 28, h: 26, label: "监测区" }, { x: 42, y: 76, w: 26, h: 16, label: "月台区" }] },
+  factory: { roads: [{ p: [8, 45, 92, 45], name: "厂区主干道" }, { p: [50, 10, 50, 90], name: "物流通道" }], zones: [
+    { x: 8, y: 14, w: 28, h: 26, label: "冲压车间" }, { x: 64, y: 12, w: 28, h: 26, label: "装配车间" },
+    { x: 14, y: 58, w: 30, h: 26, label: "质检区" }, { x: 64, y: 56, w: 28, h: 26, label: "动力站" }, { x: 42, y: 76, w: 26, h: 16, label: "仓储物流" }] },
+  oilfield: { roads: [{ p: [8, 45, 92, 45], name: "油区主干道" }, { p: [50, 10, 50, 90], name: "巡井路" }], zones: [
+    { x: 8, y: 14, w: 28, h: 26, label: "油井区" }, { x: 64, y: 12, w: 28, h: 26, label: "联合站" },
+    { x: 14, y: 58, w: 30, h: 26, label: "管线区" }, { x: 64, y: 56, w: 28, h: 26, label: "增压站" }, { x: 42, y: 76, w: 26, h: 16, label: "基站区" }] },
+  pipegallery: { corridor: { x: 8, y: 40, w: 84, h: 10, label: "综合管廊主干" }, roads: [], zones: [
+    { x: 8, y: 14, w: 28, h: 26, label: "电力舱段" }, { x: 64, y: 12, w: 28, h: 26, label: "水信舱段" },
+    { x: 14, y: 58, w: 30, h: 26, label: "燃气舱段" }, { x: 64, y: 56, w: 28, h: 26, label: "巡检段" }, { x: 42, y: 76, w: 26, h: 16, label: "通风段" }] },
+  gas: { roads: [{ p: [8, 45, 92, 45], name: "市政主干道" }, { p: [50, 10, 50, 90], name: "巡检路" }], zones: [
+    { x: 8, y: 14, w: 28, h: 26, label: "调压区" }, { x: 64, y: 14, w: 28, h: 26, label: "监测区" },
+    { x: 14, y: 58, w: 30, h: 26, label: "泄漏监测区" }, { x: 64, y: 56, w: 28, h: 26, label: "巡检区" }, { x: 42, y: 76, w: 26, h: 16, label: "视频区" }] },
+  solar: { roads: [{ p: [8, 50, 92, 50], name: "场区主路" }, { p: [50, 10, 50, 90], name: "巡检路" }], zones: [
+    { x: 8, y: 14, w: 28, h: 26, label: "逆变器区" }, { x: 64, y: 12, w: 28, h: 26, label: "组串阵列", grid: true },
+    { x: 14, y: 58, w: 30, h: 26, label: "气象区" }, { x: 64, y: 56, w: 28, h: 26, label: "清洗区" }, { x: 42, y: 76, w: 26, h: 16, label: "升压站" }] },
+  grid: { roads: [{ p: [8, 45, 92, 45], name: "市政主干道" }, { p: [50, 10, 50, 90], name: "巡检路" }], zones: [
+    { x: 8, y: 14, w: 28, h: 26, label: "站房区" }, { x: 64, y: 14, w: 28, h: 26, label: "环网区" },
+    { x: 14, y: 58, w: 30, h: 26, label: "开关区" }, { x: 64, y: 56, w: 28, h: 26, label: "巡检区" }, { x: 42, y: 76, w: 26, h: 16, label: "抢修区" }] }
+};
+const B = BASES[scene] || { roads: [], zones: [] };
+
 function nodeXY(n) {
   if (n.kind === "ship") {
     const r = S.routes[n.route];
@@ -624,17 +680,41 @@ const nodeById = id => S.nodes.find(n => n.id === id);
 function renderMap() {
   const wrap = document.getElementById("mapWrap");
   let inner = "";
-  if (S.routes) {
-    S.routes.forEach(r => {
-      inner += `<polyline points="${r.pts.map(p => p.join(",")).join(" ")}" class="route" /><text x="${(r.pts[0][0] + r.pts[r.pts.length - 1][0]) / 2}" y="${Math.min(...r.pts.map(p => p[1])) - 2}" class="route-label">${r.name}</text>`;
-    });
+  if (B.river) {
+    inner += `<rect x="0" y="0" width="6" height="100" fill="rgba(14,116,144,.35)" /><text x="3" y="50" fill="#3d6f8f" font-size="3" transform="rotate(90 3 50)" letter-spacing="1">水源</text>`;
   }
+  (B.zones || []).forEach(z => {
+    inner += `<rect x="${z.x}" y="${z.y}" width="${z.w}" height="${z.h}" rx="2" fill="#0e1a2e" stroke="#152642" stroke-width="0.6" />`;
+    if (z.grid) {
+      const iw = (z.w - 4) / 3, ih = (z.h - 8) / 2;
+      for (let gx = 0; gx < 3; gx++) for (let gy = 0; gy < 2; gy++)
+        inner += `<rect x="${z.x + 2 + gx * (iw + 1)}" y="${z.y + 2 + gy * (ih + 1)}" width="${iw}" height="${ih}" fill="#12263f" stroke="#1c3358" stroke-width="0.4" />`;
+    }
+    inner += `<text x="${z.x + 1.5}" y="${z.y + z.h - 2}" fill="#46638a" font-size="3">${z.label}</text>`;
+  });
+  if (B.corridor) {
+    const c = B.corridor;
+    inner += `<rect x="${c.x}" y="${c.y}" width="${c.w}" height="${c.h}" fill="#12263f" stroke="#2a4a7f" stroke-width="0.8" /><text x="${c.x + c.w / 2}" y="${c.y + c.h / 2 + 1}" fill="#5b7ba6" font-size="3.2" text-anchor="middle" letter-spacing="1">${c.label}</text>`;
+  }
+  (B.circles || []).forEach(c => {
+    inner += `<circle cx="${c.cx}" cy="${c.cy}" r="${c.r}" fill="none" stroke="#2a4a7f" stroke-width="0.8" stroke-dasharray="2 1.5" /><text x="${c.cx}" y="${c.cy + c.r + 3.5}" fill="#46638a" font-size="3" text-anchor="middle">${c.label}</text>`;
+  });
+  (B.roads || []).forEach(r => {
+    const [x1, y1, x2, y2] = r.p;
+    const horiz = Math.abs(x2 - x1) >= Math.abs(y2 - y1);
+    inner += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#22385e" stroke-width="2.4" stroke-linecap="round" />`;
+    inner += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#314e7d" stroke-width="0.5" stroke-dasharray="2 1.6" />`;
+    inner += horiz
+      ? `<text x="${(x1 + x2) / 2}" y="${(y1 + y2) / 2 - 2}" fill="#5b7ba6" font-size="3.2" text-anchor="middle" letter-spacing="0.5">${r.name}</text>`
+      : `<text x="${(x1 + x2) / 2 + 2}" y="${(y1 + y2) / 2}" fill="#5b7ba6" font-size="3.2" letter-spacing="0.5">${r.name}</text>`;
+  });
   S.nodes.forEach(n => {
     const [x, y] = nodeXY(n);
     const cls = statusCls(n);
     const icon = n.kind === "ship" ? "🚢" : n.kind === "port" ? "⚓" : "";
+    const glow = (cls === "ok" || cls === "warn") ? `<circle cx="${x}" cy="${y}" r="5.5" class="dot-${cls} dot-glow" />` : "";
     inner += `<g class="map-node ${n.id === selId ? "sel" : ""}" data-id="${n.id}">
-      <circle cx="${x}" cy="${y}" r="3.2" class="dot-${cls}" />
+      ${glow}<circle cx="${x}" cy="${y}" r="3.2" class="dot-${cls}" />
       <text x="${x}" y="${y - 5}" class="node-label">${icon ? icon + " " : ""}${n.name}</text></g>`;
   });
   wrap.innerHTML = `<svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet">${inner}</svg>`;

@@ -85,6 +85,8 @@ th { color: #8fa8cc; font-weight: 400; }
 #mapWrap .dot-bad { fill: #f87171; }
 #mapWrap .dot-off { fill: #64748b; }
 #mapWrap .node-label { fill: #c6d6f2; font-size: 3.6px; }
+#mapWrap .dot-glow { opacity: .16; }
+.map-legend { display: flex; gap: 14px; font-size: 12px; color: #7d93b2; margin-top: 8px; }
 .map-hint { color: #8fa8cc; font-size: 12.5px; margin-top: 10px; }
 .detail-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
 .tele { width: 100%; border-collapse: collapse; font-size: 14px; }
