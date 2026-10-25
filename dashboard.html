@@ -19,6 +19,11 @@
   </div>
   <div class="kpis" id="kpis"></div>
   <div class="panels">
+    <div class="panel"><h3 id="mapTitle"></h3><div id="mapWrap"></div><p class="map-hint">点示意图上的节点，右侧查看该点详情并控制</p></div>
+    <div class="panel"><h3>单点详情与控制</h3><div id="detail"></div></div>
+  </div>
+  <div class="panel strat-panel"><h3>策略控制</h3><div id="strats"></div><p class="strat-note" id="stratNote"></p></div>
+  <div class="panels">
     <div class="panel"><h3 id="chart1Title"></h3><canvas id="chart1"></canvas></div>
     <div class="panel"><h3>实时告警</h3><div id="alerts"></div></div>
   </div>
@@ -26,10 +31,7 @@
     <div class="panel"><h3 id="chart2Title"></h3><canvas id="chart2"></canvas></div>
     <div class="panel"><h3>设备状态</h3><table id="devices"></table></div>
   </div>
-  <div class="panels" id="lightPanel" style="display:none">
-    <div class="panel" style="grid-column:1/-1"><h3>单灯控制（点灯可开关，亮灯率实时变化）</h3><div class="lamps" id="lamps"></div></div>
-  </div>
-  <div class="footer">演示数据为模拟数据，仅用于方案演示 · <a href="index.html">返回演示主页</a></div>
+  <div class="footer">鸿甯智能 · IoT 演示中心 · <a href="index.html">返回演示主页</a></div>
 </div>
 
 <script>
@@ -38,6 +40,7 @@ if (_s === "light") { location.replace("light/index.html"); }
 const SCENES = {
   water: {
     name: "智慧水务 · 供水管网监控",
+    mapTitle: "供水管网示意图",
     kpis: [
       { label: "今日供水量", val: 48210, unit: "吨", trend: "较昨日 +3.2%", cls: "up" },
       { label: "管网漏损率", val: 8.4, unit: "%", trend: "较上月 -0.6%", cls: "down" },
@@ -46,15 +49,29 @@ const SCENES = {
     ],
     c1: "24 小时供水量（吨）", d1: [3200, 2800, 2400, 2100, 2300, 3100, 4200, 5100, 5400, 5200, 4900, 4800, 5000, 5300, 5600, 5800, 5500, 5200, 4900, 4600, 4300, 4000, 3700, 3400],
     c2: "管网压力（MPa）", d2: [0.32, 0.31, 0.30, 0.29, 0.30, 0.32, 0.35, 0.38, 0.39, 0.38, 0.37, 0.36, 0.37, 0.38, 0.39, 0.40, 0.38, 0.37, 0.36, 0.35, 0.34, 0.33, 0.32, 0.32],
+    links: [[12, 68, 30, 30], [30, 30, 52, 55], [30, 30, 72, 28], [52, 55, 88, 60], [45, 80, 52, 55]],
+    nodes: [
+      { id: "w1", name: "滨江取水口", x: 12, y: 68, status: "ok", canToggle: true, on: true, modes: ["自动", "手动"], mode: 0, tele: [{ l: "取水流量", v: 4200, u: "m³/h" }, { l: "浊度", v: 0.6, u: "NTU" }, { l: "水位", v: 3.2, u: "m" }] },
+      { id: "w2", name: "城南水厂", x: 30, y: 30, status: "ok", canToggle: true, on: true, modes: ["自动", "手动"], mode: 0, tele: [{ l: "出厂流量", v: 3800, u: "m³/h" }, { l: "出厂水压", v: 0.38, u: "MPa" }, { l: "水质合格率", v: 99.9, u: "%" }] },
+      { id: "w3", name: "城东泵站", x: 52, y: 55, status: "ok", canToggle: true, on: true, modes: ["自动", "手动", "检修"], mode: 0, tele: [{ l: "供水流量", v: 2100, u: "m³/h" }, { l: "出口压力", v: 0.36, u: "MPa" }, { l: "运行机组", v: 3, u: "/ 4 台" }] },
+      { id: "w4", name: "北区加压站", x: 72, y: 28, status: "ok", canToggle: true, on: true, modes: ["自动", "手动"], mode: 0, tele: [{ l: "加压流量", v: 1200, u: "m³/h" }, { l: "出口压力", v: 0.42, u: "MPa" }, { l: "电耗", v: 86, u: "kWh" }] },
+      { id: "w5", name: "开发区管网", x: 88, y: 60, status: "ok", canToggle: false, modes: ["监测", "检修"], mode: 0, tele: [{ l: "区域流量", v: 860, u: "m³/h" }, { l: "末端压力", v: 0.30, u: "MPa" }, { l: "漏损率", v: 7.8, u: "%" }] },
+      { id: "w6", name: "城西水库", x: 45, y: 80, status: "ok", canToggle: true, on: true, modes: ["自动", "手动"], mode: 0, tele: [{ l: "库容", v: 82, u: "%" }, { l: "入库流量", v: 900, u: "m³/h" }, { l: "出库流量", v: 750, u: "m³/h" }] }
+    ],
+    strategies: [
+      { name: "恒压供水", note: "全网按 0.36MPa 恒压运行，泵组自动调速。" },
+      { name: "夜间节水", note: "夜间 0–5 点降压 15%，减少漏损与能耗。" },
+      { name: "高峰保供", note: "早晚高峰备用机组全部投入，保障末端压力。" }
+    ],
     alerts: [
       ["red", "压力异常", "城东 DN600 主干管压力 0.42MPa，超出阈值 · 10 分钟前"],
       ["yellow", "水质提醒", "滨江取水口浊度 0.8NTU，接近预警线 · 32 分钟前"],
       ["blue", "巡检完成", "北区泵站夜间巡检已完成，无异常 · 1 小时前"]
-    ],
-    devices: [["城东泵站", "运行中", "ok"], ["滨江取水口", "运行中", "ok"], ["北区加压站", "运行中", "ok"], ["城南水厂", "检修中", "warn"], ["开发区管网", "运行中", "ok"]]
+    ]
   },
   fire: {
     name: "智慧消防 · 联网单位监控",
+    mapTitle: "建筑消防点位示意图",
     kpis: [
       { label: "联网单位", val: 486, unit: "家", trend: "本周新增 6 家", cls: "up" },
       { label: "探测器在线率", val: 99.1, unit: "%", trend: "离线 21 个", cls: "warn" },
@@ -63,15 +80,29 @@ const SCENES = {
     ],
     c1: "24 小时告警数（次）", d1: [1, 0, 2, 0, 1, 0, 0, 1, 3, 2, 1, 0, 2, 1, 0, 1, 2, 4, 3, 1, 0, 1, 0, 0],
     c2: "消防水压（MPa）", d2: [0.85, 0.84, 0.84, 0.83, 0.84, 0.85, 0.86, 0.87, 0.86, 0.85, 0.86, 0.87, 0.88, 0.87, 0.86, 0.86, 0.85, 0.86, 0.87, 0.86, 0.85, 0.84, 0.85, 0.85],
+    links: [[50, 50, 20, 25], [50, 50, 75, 22], [50, 50, 80, 70], [50, 50, 22, 72], [50, 50, 55, 85]],
+    nodes: [
+      { id: "f0", name: "消防控制室", x: 50, y: 50, status: "ok", canToggle: false, modes: ["日常值守", "演练"], mode: 0, tele: [{ l: "在线探测器", v: 4860, u: "个" }, { l: "值班人员", v: 2, u: "人" }, { l: "系统正常率", v: 99.2, u: "%" }] },
+      { id: "f1", name: "万达广场 3F 烟感", x: 20, y: 25, status: "ok", canToggle: false, tele: [{ l: "烟雾值", v: 0.02, u: "%/m" }, { l: "温度", v: 24, u: "℃" }, { l: "电池", v: 92, u: "%" }] },
+      { id: "f2", name: "科技园 B 栋温感", x: 75, y: 22, status: "warn", canToggle: false, tele: [{ l: "温度", v: 26, u: "℃" }, { l: "温升", v: 0.2, u: "℃/min" }, { l: "电池", v: 78, u: "%" }] },
+      { id: "f3", name: "滨江大厦水箱", x: 80, y: 70, status: "ok", canToggle: true, on: true, modes: ["自动补水", "手动"], mode: 0, tele: [{ l: "液位", v: 82, u: "%" }, { l: "水压", v: 0.86, u: "MPa" }, { l: "补水阀", v: "开启", u: "" }] },
+      { id: "f4", name: "市立医院消火栓", x: 22, y: 72, status: "ok", canToggle: false, tele: [{ l: "水压", v: 0.84, u: "MPa" }, { l: "巡检", v: "昨日", u: "" }, { l: "栓口", v: "正常", u: "" }] },
+      { id: "f5", name: "高铁站喷淋", x: 55, y: 85, status: "ok", canToggle: true, on: true, modes: ["自动", "手动"], mode: 0, tele: [{ l: "管网压力", v: 0.88, u: "MPa" }, { l: "喷头", v: 240, u: "个" }, { l: "阀门", v: "开启", u: "" }] }
+    ],
+    strategies: [
+      { name: "日常值守", note: "全部点位在线监测，告警分级推送值班员。" },
+      { name: "消防演练", note: "演练期间告警只记录不外呼，避免误报扰民。" },
+      { name: "夜间静默", note: "夜间非火警提醒延后至早班汇总推送。" }
+    ],
     alerts: [
       ["red", "火警确认", "万达广场 3F 烟感报警，值班员已现场确认误报 · 8 分钟前"],
       ["yellow", "设备离线", "科技园 B 栋 2 个温感离线，已派单检修 · 25 分钟前"],
       ["blue", "水压恢复", "滨江大厦屋顶水箱液位恢复正常 · 1 小时前"]
-    ],
-    devices: [["万达广场", "正常", "ok"], ["科技园 B 栋", "2 探测器离线", "warn"], ["滨江大厦", "正常", "ok"], ["市立医院", "正常", "ok"], ["高铁站东枢纽", "正常", "ok"]]
+    ]
   },
   park: {
     name: "智慧园区 · 运行一张屏",
+    mapTitle: "园区平面示意图",
     kpis: [
       { label: "今日园区能耗", val: 12840, unit: "kWh", trend: "较昨日 -5.1%", cls: "down" },
       { label: "停车占用率", val: 72, unit: "%", trend: "剩余 214 个车位", cls: "up" },
@@ -80,32 +111,29 @@ const SCENES = {
     ],
     c1: "24 小时园区能耗（kWh）", d1: [420, 380, 340, 320, 330, 400, 520, 680, 760, 720, 700, 690, 710, 740, 780, 820, 790, 720, 660, 600, 540, 500, 470, 440],
     c2: "停车占用率（%）", d2: [30, 26, 22, 20, 21, 28, 45, 68, 82, 78, 75, 72, 70, 74, 78, 80, 76, 72, 68, 60, 52, 44, 38, 33],
+    links: [[50, 45, 18, 30], [50, 45, 72, 28], [50, 45, 30, 75], [50, 45, 80, 68], [50, 45, 55, 82]],
+    nodes: [
+      { id: "p0", name: "园区运营中心", x: 50, y: 45, status: "ok", canToggle: false, modes: ["正常运行", "节能模式"], mode: 0, tele: [{ l: "在线设备", v: 1240, u: "台" }, { l: "今日能耗", v: 12840, u: "kWh" }, { l: "未处理告警", v: 3, u: "条" }] },
+      { id: "p1", name: "A 区停车场", x: 18, y: 30, status: "ok", canToggle: false, tele: [{ l: "占用率", v: 72, u: "%" }, { l: "剩余车位", v: 214, u: "个" }, { l: "今日出入", v: 1820, u: "车次" }] },
+      { id: "p2", name: "C 栋空调群控", x: 72, y: 28, status: "warn", canToggle: true, on: true, modes: ["节能", "舒适"], mode: 0, tele: [{ l: "能耗", v: 3120, u: "kWh" }, { l: "室温", v: 25.5, u: "℃" }, { l: "设定温度", v: 26, u: "℃" }] },
+      { id: "p3", name: "园区门禁", x: 30, y: 75, status: "ok", canToggle: true, on: true, modes: ["常开", "常闭", "自动"], mode: 2, tele: [{ l: "今日通行", v: 8932, u: "人次" }, { l: "访客", v: 86, u: "人" }, { l: "异常", v: 0, u: "次" }] },
+      { id: "p4", name: "环境监测站", x: 80, y: 68, status: "ok", canToggle: false, tele: [{ l: "PM2.5", v: 28, u: "" }, { l: "温度", v: 26, u: "℃" }, { l: "湿度", v: 55, u: "%" }] },
+      { id: "p5", name: "安防摄像头组", x: 55, y: 82, status: "warn", canToggle: false, tele: [{ l: "在线", v: 118, u: "/ 121 路" }, { l: "存储", v: 92, u: "%" }, { l: "今日识别", v: 36, u: "次" }] }
+    ],
+    strategies: [
+      { name: "正常运行", note: "全部系统按日常参数运行。" },
+      { name: "节能模式", note: "空调群控上调 1℃、公共照明降档，预计日省电 8%。" },
+      { name: "大客流保障", note: "门禁全开、停车引导全开、安保巡逻加密。" }
+    ],
     alerts: [
       ["yellow", "能耗提醒", "C 栋今日能耗超周均 12%，建议检查空调时段 · 20 分钟前"],
       ["blue", "车位紧张", "A 区停车场占用率超 85%，已引导至 B 区 · 40 分钟前"],
       ["blue", "访客预约", "今日访客预约 86 人次，门禁已同步 · 1 小时前"]
-    ],
-    devices: [["A 区停车场", "正常", "ok"], ["C 栋空调群控", "能耗偏高", "warn"], ["园区门禁", "正常", "ok"], ["环境监测站", "正常", "ok"], ["安防摄像头", "3 路离线", "warn"]]
-  },
-  light: {
-    name: "智慧路灯 · 单灯控制",
-    kpis: [
-      { label: "路灯总数", val: 3860, unit: "盏", trend: "覆盖 12 条主干道", cls: "up" },
-      { label: "亮灯率", val: 99.4, unit: "%", trend: "故障 23 盏", cls: "up", id: "litRate" },
-      { label: "本月节电量", val: 41200, unit: "kWh", trend: "较传统路灯省电 61%", cls: "down" },
-      { label: "故障待处理", val: 23, unit: "盏", trend: "已派单 18 盏", cls: "warn" }
-    ],
-    c1: "24 小时亮灯数（盏）", d1: [3860, 3860, 3860, 3860, 3860, 3200, 1800, 200, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1200, 2800, 3750, 3837, 3837, 3837, 3837],
-    c2: "节能电量（kWh/小时）", d2: [0, 0, 0, 0, 0, 180, 420, 620, 0, 0, 0, 0, 0, 0, 0, 0, 0, 240, 520, 680, 720, 720, 720, 720],
-    alerts: [
-      ["yellow", "单灯故障", "中山路 128 号灯杆控制器离线，已派单 · 15 分钟前"],
-      ["blue", "策略执行", "雨天策略已执行：主干道亮度提升至 90% · 30 分钟前"],
-      ["blue", "节能简报", "本周节电 9,840kWh，约合 8,200 元 · 2 小时前"]
-    ],
-    devices: [["中山路", "正常", "ok"], ["滨江大道", "1 盏离线", "warn"], ["科技园支路", "正常", "ok"], ["解放路", "正常", "ok"], ["环城快速路", "2 盏离线", "warn"]]
+    ]
   },
   farm: {
     name: "智慧农业 · 温室与灌溉监控",
+    mapTitle: "农场田块示意图",
     kpis: [
       { label: "温室平均温度", val: 24.6, unit: "℃", trend: "适宜区间 22–28℃", cls: "up" },
       { label: "土壤墒情", val: 32, unit: "%", trend: "3 号地块偏低", cls: "warn" },
@@ -114,15 +142,29 @@ const SCENES = {
     ],
     c1: "24 小时温室温度（℃）", d1: [18, 17, 16, 16, 17, 18, 20, 22, 24, 26, 27, 28, 28, 29, 28, 27, 26, 25, 23, 22, 21, 20, 19, 18],
     c2: "土壤湿度（%）", d2: [34, 34, 33, 33, 32, 32, 31, 31, 30, 30, 32, 35, 36, 35, 34, 33, 33, 32, 32, 31, 31, 30, 30, 30],
+    links: [[50, 50, 20, 28], [50, 50, 78, 26], [50, 50, 85, 70], [50, 50, 25, 72], [50, 50, 60, 85]],
+    nodes: [
+      { id: "a0", name: "灌溉泵站", x: 50, y: 50, status: "ok", canToggle: true, on: true, modes: ["自动", "手动"], mode: 0, tele: [{ l: "流量", v: 120, u: "m³/h" }, { l: "压力", v: 0.32, u: "MPa" }, { l: "运行机组", v: 3, u: "/ 4 台" }] },
+      { id: "a1", name: "1 号温室", x: 20, y: 28, status: "ok", canToggle: true, on: true, modes: ["自动", "手动"], mode: 0, tele: [{ l: "温度", v: 24.6, u: "℃" }, { l: "湿度", v: 68, u: "%" }, { l: "CO₂", v: 820, u: "ppm" }] },
+      { id: "a2", name: "2 号温室", x: 78, y: 26, status: "ok", canToggle: true, on: true, modes: ["自动", "手动"], mode: 0, tele: [{ l: "温度", v: 25.1, u: "℃" }, { l: "湿度", v: 62, u: "%" }, { l: "补光", v: "开启", u: "" }] },
+      { id: "a3", name: "田间气象站", x: 85, y: 70, status: "ok", canToggle: false, tele: [{ l: "风速", v: 2.4, u: "m/s" }, { l: "光照", v: 42000, u: "lux" }, { l: "降雨", v: 0, u: "mm" }] },
+      { id: "a4", name: "墒情传感器组", x: 25, y: 72, status: "warn", canToggle: false, tele: [{ l: "土壤湿度", v: 32, u: "%" }, { l: "地温", v: 21, u: "℃" }, { l: "在线", v: 18, u: "/ 20 个" }] },
+      { id: "a5", name: "大田喷灌", x: 60, y: 85, status: "ok", canToggle: true, on: true, modes: ["滴灌", "喷灌"], mode: 0, tele: [{ l: "阀门开度", v: 60, u: "%" }, { l: "覆盖", v: 42, u: "亩" }, { l: "今日用水", v: 18.5, u: "吨" }] }
+    ],
+    strategies: [
+      { name: "自动灌溉", note: "按墒情阈值自动启停灌溉，低于 30% 即补水。" },
+      { name: "节水模式", note: "滴灌优先、夜间灌溉，预计省水 20%。" },
+      { name: "增温保温", note: "夜间卷帘保温、补光灯延长 2 小时。" }
+    ],
     alerts: [
       ["yellow", "墒情提醒", "3 号地块土壤湿度 28%，已触发滴灌补水 · 18 分钟前"],
       ["blue", "灌溉完成", "1 号温室今日灌溉完成，用水 12.4 吨 · 1 小时前"],
       ["yellow", "设备离线", "大田区 2 个墒情传感器离线，已派单 · 2 小时前"]
-    ],
-    devices: [["1 号温室", "正常", "ok"], ["灌溉泵站", "运行中", "ok"], ["田间气象站", "正常", "ok"], ["墒情传感器组", "2 个离线", "warn"], ["大田喷灌", "正常", "ok"]]
+    ]
   },
   community: {
     name: "智慧社区 · 小区运行监控",
+    mapTitle: "小区平面示意图",
     kpis: [
       { label: "在管住户", val: 12480, unit: "户", trend: "12 个小区", cls: "up" },
       { label: "今日门禁通行", val: 21340, unit: "人次", trend: "高峰 7:30-8:30", cls: "up" },
@@ -131,15 +173,29 @@ const SCENES = {
     ],
     c1: "24 小时门禁通行（人次）", d1: [120, 80, 50, 30, 25, 40, 180, 620, 980, 720, 540, 480, 520, 560, 610, 580, 720, 980, 860, 640, 420, 300, 220, 160],
     c2: "工单新增（单）", d2: [2, 1, 0, 0, 1, 0, 3, 5, 8, 6, 4, 3, 5, 4, 6, 5, 7, 4, 3, 2, 2, 1, 1, 1],
+    links: [[50, 45, 18, 30], [50, 45, 72, 28], [50, 45, 30, 72], [50, 45, 80, 68], [50, 45, 55, 85]],
+    nodes: [
+      { id: "c0", name: "物业中心", x: 50, y: 45, status: "ok", canToggle: false, tele: [{ l: "待处理工单", v: 14, u: "单" }, { l: "今日报修", v: 32, u: "单" }, { l: "满意度", v: 96, u: "%" }] },
+      { id: "c1", name: "东门门禁", x: 18, y: 30, status: "ok", canToggle: true, on: true, modes: ["自动", "常开", "常闭"], mode: 0, tele: [{ l: "今日通行", v: 8932, u: "人次" }, { l: "访客", v: 128, u: "人" }, { l: "异常", v: 3, u: "人次" }] },
+      { id: "c2", name: "地下车库", x: 72, y: 28, status: "ok", canToggle: false, tele: [{ l: "占用率", v: 68, u: "%" }, { l: "剩余车位", v: 812, u: "个" }, { l: "充电桩", v: 24, u: "个" }] },
+      { id: "c3", name: "2 号楼电梯", x: 30, y: 72, status: "ok", canToggle: false, tele: [{ l: "运行", v: 2, u: "/ 2 部" }, { l: "维保", v: "昨日", u: "" }, { l: "困人告警", v: 0, u: "次" }] },
+      { id: "c4", name: "监控中心", x: 80, y: 68, status: "warn", canToggle: false, tele: [{ l: "在线", v: 96, u: "/ 97 路" }, { l: "存储", v: 88, u: "%" }, { l: "今日报警", v: 2, u: "次" }] },
+      { id: "c5", name: "西门道闸", x: 55, y: 85, status: "ok", canToggle: true, on: true, modes: ["自动", "常开"], mode: 0, tele: [{ l: "今日通行", v: 4210, u: "车次" }, { l: "识别率", v: 99.5, u: "%" }, { l: "异常放行", v: 0, u: "次" }] }
+    ],
+    strategies: [
+      { name: "日常", note: "门禁、道闸、监控按日常参数运行。" },
+      { name: "夜间安防加强", note: "巡逻频次加倍，陌生人识别灵敏度提高。" },
+      { name: "节假日大客流", note: "访客通道全开，车位引导全开。" }
+    ],
     alerts: [
       ["yellow", "访客提醒", "东门访客未登记 3 人次，物业已跟进 · 12 分钟前"],
       ["blue", "维保完成", "2 号楼电梯季度维保完成 · 1 小时前"],
       ["yellow", "车位紧张", "地下 B2 层占用率超 90%，已引导至 B3 · 40 分钟前"]
-    ],
-    devices: [["东门门禁", "正常", "ok"], ["地下车库", "正常", "ok"], ["2 号楼电梯", "维保完成", "ok"], ["监控中心", "1 路离线", "warn"], ["物业工单台", "正常", "ok"]]
+    ]
   },
   traffic: {
     name: "智慧交通 · 路网运行监控",
+    mapTitle: "路网示意图",
     kpis: [
       { label: "联网路口", val: 342, unit: "个", trend: "信号在线率 99.0%", cls: "up" },
       { label: "路网平均车速", val: 34.2, unit: "km/h", trend: "较昨日 +1.8", cls: "up" },
@@ -148,12 +204,214 @@ const SCENES = {
     ],
     c1: "24 小时路口流量（辆次）", d1: [800, 600, 450, 380, 360, 420, 900, 1800, 2600, 2200, 1900, 1800, 1850, 1950, 2100, 2300, 2400, 2600, 2300, 1800, 1400, 1100, 950, 850],
     c2: "路网平均车速（km/h）", d2: [42, 44, 45, 46, 46, 44, 38, 28, 24, 30, 34, 36, 35, 34, 32, 30, 26, 24, 28, 32, 36, 40, 42, 43],
+    links: [[50, 45, 20, 28], [50, 45, 78, 26], [50, 45, 28, 72], [50, 45, 80, 70], [50, 45, 55, 85]],
+    nodes: [
+      { id: "t0", name: "信号控制中心", x: 50, y: 45, status: "ok", canToggle: false, modes: ["平峰", "高峰", "夜间"], mode: 0, tele: [{ l: "在线信号机", v: 339, u: "/ 342 台" }, { l: "当前方案", v: "平峰", u: "" }, { l: "拥堵路口", v: 3, u: "个" }] },
+      { id: "t1", name: "中山路口", x: 20, y: 28, status: "warn", canToggle: false, modes: ["平峰", "高峰", "夜间"], mode: 1, tele: [{ l: "流量", v: 2600, u: "辆次/h" }, { l: "车速", v: 24, u: "km/h" }, { l: "拥堵指数", v: 8.2, u: "" }] },
+      { id: "t2", name: "滨江大道路口", x: 78, y: 26, status: "ok", canToggle: false, modes: ["平峰", "高峰", "夜间"], mode: 0, tele: [{ l: "流量", v: 1850, u: "辆次/h" }, { l: "车速", v: 36, u: "km/h" }, { l: "拥堵指数", v: 4.1, u: "" }] },
+      { id: "t3", name: "解放路口", x: 28, y: 72, status: "ok", canToggle: false, modes: ["平峰", "高峰", "夜间"], mode: 0, tele: [{ l: "流量", v: 2100, u: "辆次/h" }, { l: "车速", v: 30, u: "km/h" }, { l: "拥堵指数", v: 5.6, u: "" }] },
+      { id: "t4", name: "环城快速路", x: 80, y: 70, status: "ok", canToggle: false, tele: [{ l: "流量", v: 3200, u: "辆次/h" }, { l: "车速", v: 58, u: "km/h" }, { l: "拥堵指数", v: 2.3, u: "" }] },
+      { id: "t5", name: "违停相机组", x: 55, y: 85, status: "ok", canToggle: false, tele: [{ l: "今日抓拍", v: 128, u: "起" }, { l: "在线", v: 46, u: "/ 48 台" }, { l: "重点路段", v: 46, u: "起" }] }
+    ],
+    strategies: [
+      { name: "平峰配时", note: "各路口按平峰方案运行，绿波带速 40km/h。" },
+      { name: "早晚高峰", note: "主干道绿灯延长 15%，潮汐车道开放。" },
+      { name: "夜间绿波", note: "夜间低流量下主干道绿波协调，减少停车。" }
+    ],
     alerts: [
       ["red", "拥堵提醒", "中山路与解放路交叉口拥堵指数 8.2，已调整配时 · 5 分钟前"],
       ["yellow", "信号故障", "滨江大道 2 号信号机通信中断，已派单 · 22 分钟前"],
       ["blue", "违停抓拍", "环城快速路辅道违停抓拍 12 起 · 1 小时前"]
+    ]
+  },
+  ship: {
+    name: "智慧船舶 · 远洋船队监控",
+    mapTitle: "航线海图",
+    kpis: [
+      { label: "在航船舶", val: 18, unit: "艘", trend: "3 艘即将靠泊", cls: "up" },
+      { label: "船队准班率", val: 98.1, unit: "%", trend: "较上月 +0.4%", cls: "up" },
+      { label: "平均航速", val: 12.4, unit: "kn", trend: "经济航速区间", cls: "up" },
+      { label: "本月燃油消耗", val: 2840, unit: "吨", trend: "较预算 -6.2%", cls: "down" }
     ],
-    devices: [["中山路口", "拥堵", "warn"], ["滨江大道路口", "正常", "ok"], ["信号控制机", "1 台离线", "warn"], ["违停相机", "正常", "ok"], ["公交优先道", "正常", "ok"]]
+    c1: "24 小时船队平均航速（kn）", d1: [12.1, 12.0, 11.8, 11.9, 12.2, 12.4, 12.5, 12.3, 12.6, 12.8, 12.5, 12.4, 12.6, 12.9, 13.0, 12.7, 12.5, 12.4, 12.3, 12.2, 12.1, 12.0, 12.2, 12.4],
+    c2: "燃油消耗（吨/小时）", d2: [4.2, 4.1, 4.0, 4.0, 4.1, 4.3, 4.5, 4.6, 4.8, 4.7, 4.5, 4.4, 4.6, 4.8, 5.0, 4.9, 4.7, 4.5, 4.3, 4.2, 4.1, 4.0, 4.1, 4.2],
+    routes: [
+      { name: "上海 → 新加坡", pts: [[15, 25], [40, 45], [65, 60], [85, 70]] },
+      { name: "宁波舟山 → 新加坡", pts: [[25, 45], [50, 55], [85, 70]] }
+    ],
+    nodes: [
+      { id: "s1", kind: "ship", name: "鸿鹄轮 · Capesize", route: 0, pos: 0.30, kn: 12.5, status: "ok", tele: [{ l: "航速", v: 12.5, u: "kn" }, { l: "航向", v: 185, u: "°" }, { l: "燃油", v: 62, u: "%" }, { l: "载重", v: 18, u: "万吨" }] },
+      { id: "s2", kind: "ship", name: "海鸥轮 · 巴拿马型", route: 0, pos: 0.65, kn: 11.8, status: "ok", tele: [{ l: "航速", v: 11.8, u: "kn" }, { l: "航向", v: 190, u: "°" }, { l: "燃油", v: 48, u: "%" }, { l: "载重", v: 7.5, u: "万吨" }] },
+      { id: "s3", kind: "ship", name: "长风轮 · 灵便型", route: 1, pos: 0.50, kn: 13.2, status: "ok", tele: [{ l: "航速", v: 13.2, u: "kn" }, { l: "航向", v: 205, u: "°" }, { l: "燃油", v: 71, u: "%" }, { l: "载重", v: 3.2, u: "万吨" }] },
+      { id: "s4", kind: "port", name: "上海港", x: 15, y: 25, status: "ok", tele: [{ l: "靠泊", v: 18, u: "艘" }, { l: "吞吐", v: 12.4, u: "万吨" }, { l: "拥堵", v: "低", u: "" }] },
+      { id: "s5", kind: "port", name: "宁波舟山港", x: 25, y: 45, status: "ok", tele: [{ l: "靠泊", v: 12, u: "艘" }, { l: "吞吐", v: 8.1, u: "万吨" }, { l: "拥堵", v: "中", u: "" }] },
+      { id: "s6", kind: "port", name: "新加坡港", x: 85, y: 70, status: "ok", tele: [{ l: "靠泊", v: 24, u: "艘" }, { l: "吞吐", v: 15.6, u: "万吨" }, { l: "拥堵", v: "低", u: "" }] }
+    ],
+    strategies: [
+      { name: "经济航速", note: "全船队按 12kn 经济航速航行，燃油最省。" },
+      { name: "准班全速", note: "有靠泊窗口压力的船舶提速至 14kn 保准班。" },
+      { name: "恶劣天气绕航", note: "台风区船舶自动绕航，航程增加约 6%。" }
+    ],
+    alerts: [
+      ["yellow", "偏航提醒", "鸿鹄轮航向偏差 3°，已自动修正 · 9 分钟前"],
+      ["yellow", "燃油提醒", "海鸥轮燃油 48%，建议新加坡港补给 · 28 分钟前"],
+      ["blue", "靠泊完成", "长风轮抵达宁波舟山港，开始卸货 · 1 小时前"]
+    ]
+  },
+  company: {
+    name: "智慧公司 · 总部办公监控",
+    mapTitle: "总部楼层示意图",
+    kpis: [
+      { label: "今日能耗", val: 8640, unit: "kWh", trend: "较昨日 -4.2%", cls: "down" },
+      { label: "会议室使用率", val: 68, unit: "%", trend: "高峰 10:00-11:30", cls: "up" },
+      { label: "今日访客", val: 214, unit: "人", trend: "已预约 186 人", cls: "up" },
+      { label: "工位使用率", val: 76, unit: "%", trend: "灵活工位 240 个", cls: "up" }
+    ],
+    c1: "24 小时总部能耗（kWh）", d1: [320, 280, 240, 220, 230, 280, 380, 520, 640, 680, 660, 640, 660, 690, 720, 700, 640, 560, 480, 420, 380, 350, 340, 330],
+    c2: "会议室使用率（%）", d2: [5, 2, 0, 0, 0, 0, 10, 35, 68, 82, 88, 76, 70, 78, 85, 80, 72, 55, 30, 15, 8, 5, 4, 3],
+    links: [[50, 45, 18, 30], [50, 45, 72, 28], [50, 45, 30, 72], [50, 45, 80, 68], [50, 45, 55, 85]],
+    nodes: [
+      { id: "o0", name: "总部运营中心", x: 50, y: 45, status: "ok", canToggle: false, modes: ["正常办公", "节能下班"], mode: 0, tele: [{ l: "在线设备", v: 860, u: "台" }, { l: "今日能耗", v: 8640, u: "kWh" }, { l: "未处理告警", v: 2, u: "条" }] },
+      { id: "o1", name: "前台访客", x: 18, y: 30, status: "ok", canToggle: false, tele: [{ l: "今日访客", v: 214, u: "人" }, { l: "已预约", v: 186, u: "人" }, { l: "未登记", v: 2, u: "人" }] },
+      { id: "o2", name: "会议室群", x: 72, y: 28, status: "warn", canToggle: false, tele: [{ l: "使用率", v: 68, u: "%" }, { l: "冲突预定", v: 2, u: "起" }, { l: "空闲", v: 6, u: "间" }] },
+      { id: "o3", name: "办公区空调", x: 30, y: 72, status: "ok", canToggle: true, on: true, modes: ["节能", "舒适"], mode: 0, tele: [{ l: "室温", v: 25.2, u: "℃" }, { l: "设定", v: 26, u: "℃" }, { l: "能耗", v: 3120, u: "kWh" }] },
+      { id: "o4", name: "地下停车场", x: 80, y: 68, status: "ok", canToggle: false, tele: [{ l: "占用率", v: 74, u: "%" }, { l: "剩余", v: 96, u: "个" }, { l: "充电桩", v: 18, u: "个" }] },
+      { id: "o5", name: "安防中心", x: 55, y: 85, status: "ok", canToggle: false, tele: [{ l: "在线", v: 88, u: "/ 88 路" }, { l: "今日报警", v: 1, u: "次" }, { l: "门禁异常", v: 0, u: "次" }] }
+    ],
+    strategies: [
+      { name: "正常办公", note: "空调、照明、门禁按工作日参数运行。" },
+      { name: "节能下班", note: "19 点后非核心区空调停机、照明降档。" },
+      { name: "重要接待", note: "访客通道全开、贵宾会议室预留、停车引导。" }
+    ],
+    alerts: [
+      ["yellow", "会议冲突", "12F 大会议室 10:00-11:00 有 2 起重叠预定，已提醒行政 · 15 分钟前"],
+      ["blue", "访客预约", "今日访客 214 人，前台已同步名单 · 40 分钟前"],
+      ["yellow", "能耗提醒", "18F 办公区今日能耗超周均 9% · 1 小时前"]
+    ]
+  },
+  mine: {
+    name: "智慧矿山 · 矿区安全与生产监控",
+    mapTitle: "矿区示意图",
+    kpis: [
+      { label: "今日产量", val: 12800, unit: "吨", trend: "较昨日 +2.1%", cls: "up" },
+      { label: "设备在线率", val: 97.2, unit: "%", trend: "离线 4 台", cls: "warn" },
+      { label: "瓦斯浓度", val: 0.42, unit: "%", trend: "安全阈值 1% 以内", cls: "up" },
+      { label: "井下人员", val: 186, unit: "人", trend: "定位在线 100%", cls: "up" }
+    ],
+    c1: "24 小时产量（吨）", d1: [420, 380, 360, 340, 350, 420, 560, 680, 720, 700, 680, 660, 680, 710, 740, 720, 680, 620, 560, 500, 460, 440, 430, 420],
+    c2: "瓦斯浓度（%）", d2: [0.38, 0.37, 0.36, 0.36, 0.37, 0.38, 0.40, 0.42, 0.44, 0.43, 0.42, 0.41, 0.42, 0.43, 0.44, 0.43, 0.42, 0.41, 0.40, 0.39, 0.38, 0.38, 0.37, 0.37],
+    links: [[50, 45, 20, 28], [50, 45, 78, 26], [50, 45, 28, 72], [50, 45, 80, 68], [50, 45, 55, 85]],
+    nodes: [
+      { id: "m0", name: "井口调度中心", x: 50, y: 45, status: "ok", canToggle: false, modes: ["正常生产", "安全巡检"], mode: 0, tele: [{ l: "井下人员", v: 186, u: "人" }, { l: "今日产量", v: 12800, u: "吨" }, { l: "未处理告警", v: 3, u: "条" }] },
+      { id: "m1", name: "采煤工作面", x: 20, y: 28, status: "ok", canToggle: true, on: true, modes: ["自动", "手动"], mode: 0, tele: [{ l: "产量", v: 4200, u: "吨" }, { l: "采煤机", v: "运行中", u: "" }, { l: "支架压力", v: 28.4, u: "MPa" }] },
+      { id: "m2", name: "瓦斯监测站", x: 78, y: 26, status: "ok", canToggle: false, tele: [{ l: "瓦斯浓度", v: 0.42, u: "%" }, { l: "风速", v: 6.2, u: "m/s" }, { l: "传感器", v: 24, u: "/ 24 个" }] },
+      { id: "m3", name: "运输皮带", x: 28, y: 72, status: "warn", canToggle: true, on: true, modes: ["自动", "手动"], mode: 0, tele: [{ l: "运量", v: 860, u: "吨/h" }, { l: "跑偏", v: 1, u: "处" }, { l: "电机温度", v: 62, u: "℃" }] },
+      { id: "m4", name: "提升机", x: 80, y: 68, status: "ok", canToggle: true, on: true, modes: ["自动", "手动"], mode: 0, tele: [{ l: "提升量", v: 540, u: "吨/h" }, { l: "钢丝绳", v: "正常", u: "" }, { l: "制动", v: "正常", u: "" }] },
+      { id: "m5", name: "人员定位基站", x: 55, y: 85, status: "ok", canToggle: false, tele: [{ l: "定位人数", v: 186, u: "人" }, { l: "基站在线", v: 18, u: "/ 18 个" }, { l: "超时未动", v: 0, u: "人" }] }
+    ],
+    strategies: [
+      { name: "正常生产", note: "采、运、提全线按生产计划运行。" },
+      { name: "安全巡检加强", note: "瓦斯巡检加密一倍，皮带沿线人工巡查。" },
+      { name: "停产撤人", note: "瓦斯超限或重大告警时一键停产、井下撤人。" }
+    ],
+    alerts: [
+      ["yellow", "皮带跑偏", "2 号运输皮带跑偏 1 处，已降速并派单 · 12 分钟前"],
+      ["blue", "瓦斯正常", "各监测点瓦斯浓度均在 0.5% 以内 · 30 分钟前"],
+      ["yellow", "设备离线", "东翼 1 台振动传感器离线，已派单 · 1 小时前"]
+    ]
+  },
+  oil: {
+    name: "智慧油库 · 油罐与收发监控",
+    mapTitle: "油库区示意图",
+    kpis: [
+      { label: "库存总量", val: 48200, unit: "吨", trend: "库容使用率 68%", cls: "up" },
+      { label: "油罐", val: 12, unit: "座", trend: "全部在线", cls: "up" },
+      { label: "今日收发", val: 3200, unit: "吨", trend: "收 1800 / 发 1400", cls: "up" },
+      { label: "连续安全天数", val: 486, unit: "天", trend: "零事故运行", cls: "up" }
+    ],
+    c1: "24 小时收发量（吨）", d1: [120, 80, 60, 40, 50, 90, 160, 220, 280, 260, 240, 220, 240, 260, 280, 270, 240, 200, 160, 140, 130, 120, 110, 100],
+    c2: "油罐平均液位（%）", d2: [68, 68, 67, 67, 66, 66, 67, 68, 69, 69, 68, 68, 67, 67, 68, 68, 69, 69, 68, 68, 67, 67, 68, 68],
+    links: [[50, 45, 20, 28], [50, 45, 78, 26], [50, 45, 28, 72], [50, 45, 80, 68], [50, 45, 55, 85]],
+    nodes: [
+      { id: "y0", name: "中控室", x: 50, y: 45, status: "ok", canToggle: false, modes: ["正常收发", "检修"], mode: 0, tele: [{ l: "在线油罐", v: 12, u: "座" }, { l: "今日收发", v: 3200, u: "吨" }, { l: "未处理告警", v: 1, u: "条" }] },
+      { id: "y1", name: "1 号油罐", x: 20, y: 28, status: "ok", canToggle: false, tele: [{ l: "液位", v: 72, u: "%" }, { l: "温度", v: 18.5, u: "℃" }, { l: "介质", v: "汽油", u: "" }] },
+      { id: "y2", name: "2 号油罐", x: 78, y: 26, status: "warn", canToggle: false, tele: [{ l: "液位", v: 88, u: "%" }, { l: "温度", v: 19.1, u: "℃" }, { l: "介质", v: "柴油", u: "" }] },
+      { id: "y3", name: "装车台", x: 28, y: 72, status: "ok", canToggle: true, on: true, modes: ["自动", "手动"], mode: 0, tele: [{ l: "装车", v: 8, u: "辆" }, { l: "流量", v: 120, u: "吨/h" }, { l: "静电接地", v: "正常", u: "" }] },
+      { id: "y4", name: "消防泵房", x: 80, y: 68, status: "ok", canToggle: true, on: false, modes: ["自动", "手动"], mode: 0, tele: [{ l: "水压", v: 0.9, u: "MPa" }, { l: "泵组", v: "待机", u: "" }, { l: "泡沫液", v: 82, u: "%" }] },
+      { id: "y5", name: "可燃气体监测", x: 55, y: 85, status: "ok", canToggle: false, tele: [{ l: "LEL", v: 8, u: "%" }, { l: "探头在线", v: 36, u: "/ 36 个" }, { l: "报警", v: 0, u: "起" }] }
+    ],
+    strategies: [
+      { name: "正常收发", note: "按计划收发油，液位、温度、气体全程监测。" },
+      { name: "检修模式", note: "单罐隔离检修，其余罐正常收发。" },
+      { name: "应急响应", note: "消防泵组启动、装车台停机、人员疏散指引。" }
+    ],
+    alerts: [
+      ["yellow", "液位提醒", "2 号油罐液位 88%，接近高液位线 · 10 分钟前"],
+      ["blue", "收发完成", "今日第 8 车装车完成，合计 1400 吨 · 40 分钟前"],
+      ["blue", "消防演练", "本周消防演练完成，泵组启动正常 · 2 小时前"]
+    ]
+  },
+  warehouse: {
+    name: "智慧仓储 · 货架与 AGV 监控",
+    mapTitle: "仓库平面示意图",
+    kpis: [
+      { label: "库存总量", val: 86400, unit: "件", trend: "货位使用率 82%", cls: "up" },
+      { label: "今日出入库", val: 12800, unit: "件", trend: "出 7200 / 入 5600", cls: "up" },
+      { label: "AGV 在线", val: 24, unit: "/ 24 台", trend: "全部在线", cls: "up" },
+      { label: "订单准时率", val: 99.4, unit: "%", trend: "超时 3 单", cls: "up" }
+    ],
+    c1: "24 小时出入库（件）", d1: [320, 240, 180, 150, 160, 220, 380, 620, 860, 920, 880, 840, 860, 900, 940, 920, 860, 720, 560, 440, 380, 340, 330, 320],
+    c2: "货位使用率（%）", d2: [80, 80, 81, 81, 82, 82, 81, 82, 83, 83, 82, 82, 81, 82, 82, 83, 83, 82, 82, 81, 81, 80, 80, 80],
+    links: [[50, 45, 20, 28], [50, 45, 78, 26], [50, 45, 28, 72], [50, 45, 80, 68], [50, 45, 55, 85]],
+    nodes: [
+      { id: "k0", name: "仓储控制中心", x: 50, y: 45, status: "ok", canToggle: false, modes: ["正常作业", "盘点"], mode: 0, tele: [{ l: "库存", v: 86400, u: "件" }, { l: "今日出入库", v: 12800, u: "件" }, { l: "未处理告警", v: 2, u: "条" }] },
+      { id: "k1", name: "立体货架区", x: 20, y: 28, status: "ok", canToggle: false, tele: [{ l: "货位使用率", v: 82, u: "%" }, { l: "巷道堆垛机", v: 6, u: "/ 6 台" }, { l: "呆滞库存", v: 320, u: "件" }] },
+      { id: "k2", name: "AGV 车队", x: 78, y: 26, status: "ok", canToggle: true, on: true, modes: ["自动", "手动"], mode: 0, tele: [{ l: "在线", v: 24, u: "台" }, { l: "任务", v: 86, u: "个" }, { l: "电量低", v: 1, u: "台" }] },
+      { id: "k3", name: "分拣线", x: 28, y: 72, status: "warn", canToggle: true, on: true, modes: ["自动", "手动"], mode: 0, tele: [{ l: "分拣", v: 4200, u: "件/h" }, { l: "差错率", v: 0.2, u: "%" }, { l: "皮带", v: "运行中", u: "" }] },
+      { id: "k4", name: "温湿度监测", x: 80, y: 68, status: "ok", canToggle: false, tele: [{ l: "温度", v: 22.5, u: "℃" }, { l: "湿度", v: 48, u: "%" }, { l: "探头", v: 16, u: "/ 16 个" }] },
+      { id: "k5", name: "出入库月台", x: 55, y: 85, status: "ok", canToggle: false, tele: [{ l: "在途车辆", v: 6, u: "辆" }, { l: "今日装车", v: 42, u: "辆" }, { l: "排队", v: 2, u: "辆" }] }
+    ],
+    strategies: [
+      { name: "正常作业", note: "AGV、分拣、货架按订单节拍运行。" },
+      { name: "大促高峰", note: "AGV 全开、分拣线加开班次、月台延长作业。" },
+      { name: "盘点模式", note: "暂停出入库，全仓盘点并对账。" }
+    ],
+    alerts: [
+      ["yellow", "温湿度提醒", "冷藏区温度 8.2℃，接近上限 · 14 分钟前"],
+      ["blue", "AGV 充电", "AGV-07 电量低，已自动回充 · 30 分钟前"],
+      ["yellow", "库存预警", "A 类商品库存低于安全线，已提醒补货 · 1 小时前"]
+    ]
+  },
+  factory: {
+    name: "智慧工厂 · 车间生产监控",
+    mapTitle: "工厂车间示意图",
+    kpis: [
+      { label: "今日产量", val: 9600, unit: "件", trend: "计划完成率 102%", cls: "up" },
+      { label: "设备 OEE", val: 86.4, unit: "%", trend: "较上周 +1.2%", cls: "up" },
+      { label: "良品率", val: 99.2, unit: "%", trend: "不良 78 件", cls: "up" },
+      { label: "今日能耗", val: 18200, unit: "kWh", trend: "单件能耗 -3.1%", cls: "down" }
+    ],
+    c1: "24 小时产量（件）", d1: [320, 280, 260, 240, 250, 320, 460, 620, 720, 700, 680, 660, 680, 710, 740, 720, 680, 600, 520, 440, 380, 350, 340, 330],
+    c2: "设备 OEE（%）", d2: [82, 81, 80, 80, 81, 82, 84, 86, 88, 87, 86, 86, 85, 86, 87, 88, 87, 86, 85, 84, 83, 82, 82, 81],
+    links: [[50, 45, 20, 28], [50, 45, 78, 26], [50, 45, 28, 72], [50, 45, 80, 68], [50, 45, 55, 85]],
+    nodes: [
+      { id: "g0", name: "生产调度中心", x: 50, y: 45, status: "ok", canToggle: false, modes: ["正常生产", "检修保养"], mode: 0, tele: [{ l: "今日产量", v: 9600, u: "件" }, { l: "在制订单", v: 12, u: "个" }, { l: "停机设备", v: 1, u: "台" }] },
+      { id: "g1", name: "冲压车间", x: 20, y: 28, status: "ok", canToggle: true, on: true, modes: ["自动", "手动"], mode: 0, tele: [{ l: "产量", v: 3200, u: "件" }, { l: "冲次", v: 420, u: "次/h" }, { l: "模具寿命", v: 82, u: "%" }] },
+      { id: "g2", name: "装配线", x: 78, y: 26, status: "warn", canToggle: true, on: true, modes: ["自动", "手动"], mode: 0, tele: [{ l: "产量", v: 4800, u: "件" }, { l: "节拍", v: 42, u: "秒/件" }, { l: "缺料", v: 1, u: "项" }] },
+      { id: "g3", name: "质检站", x: 28, y: 72, status: "ok", canToggle: false, tele: [{ l: "抽检", v: 960, u: "件" }, { l: "不良", v: 78, u: "件" }, { l: "良品率", v: 99.2, u: "%" }] },
+      { id: "g4", name: "空压站", x: 80, y: 68, status: "ok", canToggle: true, on: true, modes: ["自动", "手动"], mode: 0, tele: [{ l: "供气压力", v: 0.72, u: "MPa" }, { l: "运行", v: 3, u: "/ 4 台" }, { l: "露点", v: -38, u: "℃" }] },
+      { id: "g5", name: "仓储物流", x: 55, y: 85, status: "ok", canToggle: false, tele: [{ l: "成品库存", v: 12400, u: "件" }, { l: "今日发货", v: 8600, u: "件" }, { l: "待发", v: 12, u: "单" }] }
+    ],
+    strategies: [
+      { name: "正常生产", note: "各车间按排产计划运行。" },
+      { name: "满负荷", note: "瓶颈工序加开班次，空压站备用机组投入。" },
+      { name: "检修保养", note: "单线停机保养，其余线正常生产。" }
+    ],
+    alerts: [
+      ["yellow", "设备停机", "装配线 3 号工位缺料停机 8 分钟，已补料 · 16 分钟前"],
+      ["blue", "质检完成", "本批抽检 960 件，不良 78 件在允许范围 · 45 分钟前"],
+      ["yellow", "能耗提醒", "空压站今日能耗超周均 7% · 1 小时前"]
+    ]
   }
 };
 
@@ -161,12 +419,153 @@ const scene = new URLSearchParams(location.search).get("scene") || "water";
 const S = SCENES[scene] || SCENES.water;
 document.title = S.name + " · 鸿甯智能 IoT 演示中心";
 document.getElementById("title").textContent = S.name;
+document.getElementById("mapTitle").textContent = S.mapTitle + " · 点节点查看详情";
+
+function fmt(v) { return typeof v === "number" ? (Number.isInteger(v) ? v.toLocaleString() : v) : v; }
+function statusText(n) {
+  if (n.canToggle && n.on === false) return "已停止";
+  return n.status === "ok" ? "正常" : n.status === "warn" ? "告警" : "故障";
+}
+function statusCls(n) {
+  if (n.canToggle && n.on === false) return "off";
+  return n.status === "ok" ? "ok" : n.status === "warn" ? "warn" : "bad";
+}
+function nodeXY(n) {
+  if (n.kind === "ship") {
+    const r = S.routes[n.route];
+    const pts = r.pts;
+    let total = 0;
+    const segs = [];
+    for (let i = 0; i < pts.length - 1; i++) {
+      const len = Math.hypot(pts[i + 1][0] - pts[i][0], pts[i + 1][1] - pts[i][1]);
+      segs.push(len); total += len;
+    }
+    let d = n.pos * total;
+    for (let i = 0; i < segs.length; i++) {
+      if (d <= segs[i]) {
+        const t = segs[i] ? d / segs[i] : 0;
+        return [pts[i][0] + (pts[i + 1][0] - pts[i][0]) * t, pts[i][1] + (pts[i + 1][1] - pts[i][1]) * t];
+      }
+      d -= segs[i];
+    }
+    return pts[pts.length - 1];
+  }
+  return [n.x, n.y];
+}
+
+let selId = S.nodes[0].id;
+const nodeById = id => S.nodes.find(n => n.id === id);
+
+function renderMap() {
+  const wrap = document.getElementById("mapWrap");
+  let inner = "";
+  if (S.routes) {
+    S.routes.forEach(r => {
+      inner += `<polyline points="${r.pts.map(p => p.join(",")).join(" ")}" class="route" /><text x="${(r.pts[0][0] + r.pts[r.pts.length - 1][0]) / 2}" y="${Math.min(...r.pts.map(p => p[1])) - 2}" class="route-label">${r.name}</text>`;
+    });
+  }
+  if (S.links) {
+    S.links.forEach(l => { inner += `<line x1="${l[0]}" y1="${l[1]}" x2="${l[2]}" y2="${l[3]}" class="link" />`; });
+  }
+  S.nodes.forEach(n => {
+    const [x, y] = nodeXY(n);
+    const cls = statusCls(n);
+    const icon = n.kind === "ship" ? "🚢" : n.kind === "port" ? "⚓" : "";
+    inner += `<g class="map-node ${n.id === selId ? "sel" : ""}" data-id="${n.id}">
+      <circle cx="${x}" cy="${y}" r="3.2" class="dot-${cls}" />
+      <text x="${x}" y="${y - 5}" class="node-label">${icon ? icon + " " : ""}${n.name}</text></g>`;
+  });
+  wrap.innerHTML = `<svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet">${inner}</svg>`;
+  wrap.querySelectorAll(".map-node").forEach(g => g.addEventListener("click", () => { selId = g.dataset.id; renderMap(); renderDetail(); }));
+}
+
+function renderDetail() {
+  const n = nodeById(selId);
+  const d = document.getElementById("detail");
+  let html = `<div class="detail-head"><b>${n.name}</b><span class="tag ${n.status === "ok" ? "blue" : n.status === "warn" ? "yellow" : "red"}">${statusText(n)}</span></div>`;
+  html += `<table class="tele">${n.tele.map((t, i) => `<tr><td>${t.l}</td><td><span class="tele-val" data-i="${i}">${fmt(t.v)}</span>${t.u ? " " + t.u : ""}</td></tr>`).join("")}</table>`;
+  html += `<div class="ctl-row">`;
+  if (n.canToggle) html += `<button class="btn small" onclick="toggleNode()">${n.on ? "停止运行" : "启动运行"}</button>`;
+  if (n.modes) html += `<button class="btn small ghost" onclick="cycleMode()">模式：${n.modes[n.mode]} ▾</button>`;
+  if (n.status === "warn" || n.status === "fault") html += `<button class="btn small" onclick="fixNode()">派单处置</button>`;
+  if (n.kind === "ship") {
+    html += `<label class="slider-label">设定航速 <span id="knVal">${n.kn}</span> kn</label>
+      <input type="range" min="8" max="16" step="0.1" value="${n.kn}" oninput="setKn(this.value)">
+      <div class="route-btns">${S.routes.map((r, i) => `<button class="btn small ${n.route === i ? "" : "ghost"}" onclick="setRoute(${i})">${r.name}</button>`).join("")}</div>`;
+  }
+  html += `</div>`;
+  d.innerHTML = html;
+}
+function toggleNode() {
+  const n = nodeById(selId);
+  n.on = !n.on;
+  pushAlert("blue", "设备操作", `${n.name}已${n.on ? "启动" : "停止"}运行 · 刚刚`);
+  renderMap(); renderDetail(); renderTable();
+}
+function cycleMode() {
+  const n = nodeById(selId);
+  n.mode = (n.mode + 1) % n.modes.length;
+  pushAlert("blue", "模式切换", `${n.name}切换为${n.modes[n.mode]}模式 · 刚刚`);
+  renderDetail();
+}
+function fixNode() {
+  const n = nodeById(selId);
+  n.status = "ok";
+  pushAlert("blue", "处置完成", `${n.name}已派单处置，恢复正常 · 刚刚`);
+  renderMap(); renderDetail(); renderTable();
+}
+function setKn(v) {
+  const n = nodeById(selId);
+  n.kn = parseFloat(v);
+  document.getElementById("knVal").textContent = n.kn;
+  const t = n.tele.find(t => t.l === "航速");
+  if (t) t.v = n.kn;
+  renderTele();
+}
+function setRoute(i) {
+  const n = nodeById(selId);
+  n.route = i; n.pos = 0.05;
+  pushAlert("blue", "航线调整", `${n.name}航线调整为${S.routes[i].name} · 刚刚`);
+  renderMap(); renderDetail();
+}
+function renderTele() {
+  const n = nodeById(selId);
+  document.querySelectorAll(".tele-val").forEach(el => {
+    const t = n.tele[+el.dataset.i];
+    if (t) el.textContent = fmt(t.v);
+  });
+}
+
+let activeStrat = 0;
+function renderStrats() {
+  const box = document.getElementById("strats");
+  box.innerHTML = S.strategies.map((s, i) => `<button class="strat ${i === activeStrat ? "active" : ""}" data-i="${i}">${s.name}</button>`).join("");
+  document.getElementById("stratNote").textContent = S.strategies[activeStrat].note;
+  box.querySelectorAll(".strat").forEach(b => b.addEventListener("click", () => {
+    activeStrat = +b.dataset.i;
+    pushAlert("blue", "策略执行", `${S.strategies[activeStrat].name}策略已执行 · 刚刚`);
+    renderStrats();
+  }));
+}
+
+function renderAlerts() {
+  document.getElementById("alerts").innerHTML = S.alerts.slice(0, 8).map(a =>
+    `<div class="alert"><span class="tag ${a[0] === "red" ? "red" : a[0] === "yellow" ? "yellow" : "blue"}">${a[1]}</span><span>${a[2]}</span></div>`).join("");
+}
+function pushAlert(level, title, text) {
+  S.alerts.unshift([level, title, text]);
+  renderAlerts();
+}
+function renderTable() {
+  document.getElementById("devices").innerHTML = "<tr><th>设备</th><th>状态</th></tr>" + S.nodes.map(n =>
+    `<tr><td>${n.name}</td><td><span class="dot ${statusCls(n)}"></span>${statusText(n)}</td></tr>`).join("");
+}
 
 const kpiBox = document.getElementById("kpis");
-S.kpis.forEach(k => {
+S.kpis.forEach((k, i) => {
   const d = document.createElement("div");
   d.className = "kpi";
-  d.innerHTML = `<div class="label">${k.label}</div><div class="val" ${k.id ? `id="${k.id}"` : ""}>${k.val.toLocaleString()}<small> ${k.unit}</small></div><div class="trend ${k.cls}">${k.trend}</div>`;
+  d.innerHTML = `<div class="label">${k.label}</div><div class="val" ${i === 0 ? 'id="kpi0"' : ""}>${k.val.toLocaleString()}<small> ${k.unit}</small></div><div class="trend ${k.cls}">${k.trend}</div>`;
   kpiBox.appendChild(d);
 });
 
@@ -192,36 +591,36 @@ function renderCharts() { drawChart("chart1", S.d1, "#22d3ee"); drawChart("chart
 renderCharts();
 window.addEventListener("resize", renderCharts);
 
-document.getElementById("alerts").innerHTML = S.alerts.map(a =>
-  `<div class="alert"><span class="tag ${a[0] === "red" ? "red" : a[0] === "yellow" ? "yellow" : "blue"}">${a[1]}</span><span>${a[2]}</span></div>`).join("");
-document.getElementById("devices").innerHTML = "<tr><th>设备</th><th>状态</th></tr>" + S.devices.map(d =>
-  `<tr><td>${d[0]}</td><td><span class="dot ${d[2]}"></span>${d[1]}</td></tr>`).join("");
-
-if (scene === "light") {
-  document.getElementById("lightPanel").style.display = "grid";
-  const lampsBox = document.getElementById("lamps");
-  const lamps = Array.from({ length: 12 }, (_, i) => ({ name: "中山路 " + (101 + i) + " 号", on: i !== 3 && i !== 7 }));
-  function renderLamps() {
-    const onCount = lamps.filter(l => l.on).length;
-    const rate = (99.4 - (12 - onCount) * 0.05).toFixed(1);
-    const el = document.getElementById("litRate");
-    if (el) el.innerHTML = rate + "<small> %</small>";
-    lampsBox.innerHTML = lamps.map((l, i) =>
-      `<div class="lamp ${l.on ? "on" : ""}" data-i="${i}"><div class="bulb">💡</div><div class="name">${l.name}</div><div class="state">${l.on ? "已点亮" : "已关闭"}</div></div>`).join("");
-    lampsBox.querySelectorAll(".lamp").forEach(el => el.onclick = () => { lamps[+el.dataset.i].on = !lamps[+el.dataset.i].on; renderLamps(); });
-  }
-  renderLamps();
+function jitter(n) {
+  n.tele.forEach(t => {
+    if (typeof t.v === "number" && t.v !== 0) {
+      const delta = t.v * (Math.random() * 0.04 - 0.02);
+      t.v = Math.round((t.v + delta) * 100) / 100;
+    }
+  });
 }
-
 function tick() {
-  const now = new Date();
-  document.getElementById("clock").textContent = now.toLocaleString("zh-CN", { hour12: false });
-  const firstVal = document.querySelector(".kpi .val");
-  if (firstVal && !firstVal.id) {
-    const base = parseFloat(firstVal.textContent.replace(/,/g, ""));
-    if (!isNaN(base)) firstVal.innerHTML = Math.round(base * (0.995 + Math.random() * 0.01)).toLocaleString() + "<small> " + S.kpis[0].unit + "</small>";
+  document.getElementById("clock").textContent = new Date().toLocaleString("zh-CN", { hour12: false });
+  const kpi0 = document.getElementById("kpi0");
+  if (kpi0) {
+    const base = S.kpis[0].val;
+    kpi0.innerHTML = Math.round(base * (0.995 + Math.random() * 0.01)).toLocaleString() + "<small> " + S.kpis[0].unit + "</small>";
   }
+  S.nodes.forEach(n => { if (n.status === "ok" && (n.on !== false)) jitter(n); });
+  S.nodes.forEach(n => {
+    if (n.kind === "ship") { n.pos += n.kn * 0.0004; if (n.pos >= 1) n.pos = 0; }
+  });
+  if (Math.random() < 0.10) {
+    const cands = S.nodes.filter(n => n.status === "ok" && n.on !== false && n.kind !== "port");
+    if (cands.length) {
+      const n = cands[Math.floor(Math.random() * cands.length)];
+      n.status = Math.random() < 0.3 ? "fault" : "warn";
+      pushAlert(n.status === "fault" ? "red" : "yellow", n.status === "fault" ? "设备故障" : "设备告警", `${n.name}出现${n.status === "fault" ? "故障" : "告警"}，请查看详情并处置 · 刚刚`);
+    }
+  }
+  renderMap(); renderTele(); renderTable();
 }
+renderMap(); renderDetail(); renderStrats(); renderAlerts(); renderTable();
 tick(); setInterval(tick, 3000);
 </script>
 </body>

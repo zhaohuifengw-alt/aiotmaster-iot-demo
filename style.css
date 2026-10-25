@@ -71,3 +71,33 @@ th { color: #8fa8cc; font-weight: 400; }
 .reg-note { font-size: 13px; margin-top: 12px; min-height: 18px; color: #8fa8cc; }
 .reg-note.err { color: #f87171; }
 .reg-note.ok { color: #34d399; }
+
+/* refined dashboard: schematic map, detail, strategies */
+#mapWrap svg { width: 100%; height: auto; background: #0a1a30; border: 1px solid #1c3358; border-radius: 10px; }
+#mapWrap .route { fill: none; stroke: #22d3ee; stroke-width: 0.8; stroke-dasharray: 3 2; opacity: 0.7; }
+#mapWrap .route-label { fill: #7dd3fc; font-size: 3.4px; }
+#mapWrap .link { stroke: #1c3358; stroke-width: 1.2; }
+#mapWrap .map-node { cursor: pointer; }
+#mapWrap .map-node circle { stroke: #0a1a30; stroke-width: 0.8; }
+#mapWrap .map-node.sel circle { stroke: #fff; stroke-width: 1.4; }
+#mapWrap .dot-ok { fill: #34d399; }
+#mapWrap .dot-warn { fill: #fbbf24; }
+#mapWrap .dot-bad { fill: #f87171; }
+#mapWrap .dot-off { fill: #64748b; }
+#mapWrap .node-label { fill: #c6d6f2; font-size: 3.6px; }
+.map-hint { color: #8fa8cc; font-size: 12.5px; margin-top: 10px; }
+.detail-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.tele { width: 100%; border-collapse: collapse; font-size: 14px; }
+.tele td { padding: 8px 0; border-bottom: 1px solid #1c3358; }
+.tele td:last-child { text-align: right; color: #fbbf24; font-weight: 700; }
+.ctl-row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
+.btn.small { display: inline-block; width: auto; margin-top: 0; padding: 8px 16px; font-size: 13.5px; }
+.slider-label { display: block; font-size: 13px; color: #8fa8cc; margin-top: 6px; }
+.ctl-row input[type="range"] { width: 100%; margin-top: 6px; }
+.route-btns { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 6px; }
+.strat-panel { margin-top: 16px; }
+#strats { display: flex; gap: 10px; flex-wrap: wrap; }
+.strat { background: #0d1c33; color: #c6d6f2; border: 1px solid #1c3358; border-radius: 20px; padding: 8px 18px; cursor: pointer; font-size: 14px; }
+.strat.active { background: #22d3ee; color: #06202a; font-weight: 700; border-color: #22d3ee; }
+.strat-note { color: #8fa8cc; font-size: 13.5px; margin-top: 12px; }
+.dot.off { background: #64748b; }
