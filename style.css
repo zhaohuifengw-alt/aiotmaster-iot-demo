@@ -73,15 +73,18 @@ th { color: #8fa8cc; font-weight: 400; }
 .reg-note.ok { color: #34d399; }
 
 /* refined dashboard: schematic map, detail, strategies */
-#mapWrap { height: 420px; border: 1px solid #1c3358; border-radius: 10px; overflow: hidden; background: #0a1a30; }
-#mapWrap .leaflet-container { background: #0a1a30; font-family: inherit; }
-.mk-wrap { text-align: center; }
-.mk-dot { width: 14px; height: 14px; border-radius: 50%; margin: 0 auto 2px; border: 2px solid #fff; box-shadow: 0 1px 6px rgba(0,0,0,.6); cursor: pointer; }
-.mk-dot.mk-ok { background: #34d399; } .mk-dot.mk-warn { background: #fbbf24; }
-.mk-dot.mk-bad { background: #f87171; } .mk-dot.mk-off { background: #64748b; }
-.mk-dot.sel { box-shadow: 0 0 0 3px #fff, 0 1px 8px rgba(0,0,0,.6); }
-.mk-label { font-size: 11px; color: #e2e8f0; text-shadow: 0 1px 3px #000, 0 0 6px #000; white-space: nowrap; }
-.mk-sub { font-size: 10px; color: #9fb3d1; text-shadow: 0 1px 3px #000, 0 0 6px #000; white-space: nowrap; }
+#mapWrap svg { width: 100%; height: auto; background: #0a1a30; border: 1px solid #1c3358; border-radius: 10px; }
+#mapWrap .route { fill: none; stroke: #22d3ee; stroke-width: 0.8; stroke-dasharray: 3 2; opacity: 0.7; }
+#mapWrap .route-label { fill: #7dd3fc; font-size: 3.4px; }
+#mapWrap .link { stroke: #1c3358; stroke-width: 1.2; }
+#mapWrap .map-node { cursor: pointer; }
+#mapWrap .map-node circle { stroke: #0a1a30; stroke-width: 0.8; }
+#mapWrap .map-node.sel circle { stroke: #fff; stroke-width: 1.4; }
+#mapWrap .dot-ok { fill: #34d399; }
+#mapWrap .dot-warn { fill: #fbbf24; }
+#mapWrap .dot-bad { fill: #f87171; }
+#mapWrap .dot-off { fill: #64748b; }
+#mapWrap .node-label { fill: #c6d6f2; font-size: 3.6px; }
 .map-hint { color: #8fa8cc; font-size: 12.5px; margin-top: 10px; }
 .detail-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
 .tele { width: 100%; border-collapse: collapse; font-size: 14px; }

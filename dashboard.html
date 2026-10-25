@@ -5,8 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>演示大屏 · 鸿甯智能 IoT 演示中心</title>
 <link rel="stylesheet" href="style.css">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
-<script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
 </head>
 <body>
 <div class="topbar">
@@ -21,7 +19,7 @@
   </div>
   <div class="kpis" id="kpis"></div>
   <div class="panels">
-    <div class="panel"><h3 id="mapTitle"></h3><div id="mapWrap"></div><p class="map-hint">点地图上的节点，右侧查看该点详情并控制</p></div>
+    <div class="panel"><h3 id="mapTitle"></h3><div id="mapWrap"></div><p class="map-hint">点示意图上的节点，右侧查看该点详情并控制</p></div>
     <div class="panel"><h3>单点详情与控制</h3><div id="detail"></div></div>
   </div>
   <div class="panel strat-panel"><h3>策略控制</h3><div id="strats"></div><p class="strat-note" id="stratNote"></p></div>
@@ -238,16 +236,16 @@ const SCENES = {
     c1: "24 小时船队平均航速（kn）", d1: [12.1, 12.0, 11.8, 11.9, 12.2, 12.4, 12.5, 12.3, 12.6, 12.8, 12.5, 12.4, 12.6, 12.9, 13.0, 12.7, 12.5, 12.4, 12.3, 12.2, 12.1, 12.0, 12.2, 12.4],
     c2: "燃油消耗（吨/小时）", d2: [4.2, 4.1, 4.0, 4.0, 4.1, 4.3, 4.5, 4.6, 4.8, 4.7, 4.5, 4.4, 4.6, 4.8, 5.0, 4.9, 4.7, 4.5, 4.3, 4.2, 4.1, 4.0, 4.1, 4.2],
     routes: [
-      { name: "上海 → 新加坡", pts: [[31.2552, 121.4747], [30.5, 122.3], [26.5, 120.8], [22.5, 118.5], [18, 114.5], [12, 110.5], [6, 106], [1.2909, 103.8524]] },
-      { name: "宁波舟山 → 新加坡", pts: [[29.933, 121.833], [28, 122.2], [24, 120], [20, 116.5], [15, 112], [8, 107.5], [1.2909, 103.8524]] }
+      { name: "上海 → 新加坡", pts: [[15, 25], [40, 45], [65, 60], [85, 70]] },
+      { name: "宁波舟山 → 新加坡", pts: [[25, 45], [50, 55], [85, 70]] }
     ],
     nodes: [
       { id: "s1", kind: "ship", name: "鸿鹄轮 · Capesize", route: 0, pos: 0.30, kn: 12.5, status: "ok", tele: [{ l: "航速", v: 12.5, u: "kn" }, { l: "航向", v: 185, u: "°" }, { l: "燃油", v: 62, u: "%" }, { l: "载重", v: 18, u: "万吨" }] },
       { id: "s2", kind: "ship", name: "海鸥轮 · 巴拿马型", route: 0, pos: 0.65, kn: 11.8, status: "ok", tele: [{ l: "航速", v: 11.8, u: "kn" }, { l: "航向", v: 190, u: "°" }, { l: "燃油", v: 48, u: "%" }, { l: "载重", v: 7.5, u: "万吨" }] },
       { id: "s3", kind: "ship", name: "长风轮 · 灵便型", route: 1, pos: 0.50, kn: 13.2, status: "ok", tele: [{ l: "航速", v: 13.2, u: "kn" }, { l: "航向", v: 205, u: "°" }, { l: "燃油", v: 71, u: "%" }, { l: "载重", v: 3.2, u: "万吨" }] },
-      { id: "s4", kind: "port", name: "上海港", lat: 31.2552, lng: 121.4747, status: "ok", tele: [{ l: "靠泊", v: 18, u: "艘" }, { l: "吞吐", v: 12.4, u: "万吨" }, { l: "拥堵", v: "低", u: "" }] },
-      { id: "s5", kind: "port", name: "宁波舟山港", lat: 29.933, lng: 121.833, status: "ok", tele: [{ l: "靠泊", v: 12, u: "艘" }, { l: "吞吐", v: 8.1, u: "万吨" }, { l: "拥堵", v: "中", u: "" }] },
-      { id: "s6", kind: "port", name: "新加坡港", lat: 1.2909, lng: 103.8524, status: "ok", tele: [{ l: "靠泊", v: 24, u: "艘" }, { l: "吞吐", v: 15.6, u: "万吨" }, { l: "拥堵", v: "低", u: "" }] }
+      { id: "s4", kind: "port", name: "上海港", x: 15, y: 25, status: "ok", tele: [{ l: "靠泊", v: 18, u: "艘" }, { l: "吞吐", v: 12.4, u: "万吨" }, { l: "拥堵", v: "低", u: "" }] },
+      { id: "s5", kind: "port", name: "宁波舟山港", x: 25, y: 45, status: "ok", tele: [{ l: "靠泊", v: 12, u: "艘" }, { l: "吞吐", v: 8.1, u: "万吨" }, { l: "拥堵", v: "中", u: "" }] },
+      { id: "s6", kind: "port", name: "新加坡港", x: 85, y: 70, status: "ok", tele: [{ l: "靠泊", v: 24, u: "艘" }, { l: "吞吐", v: 15.6, u: "万吨" }, { l: "拥堵", v: "低", u: "" }] }
     ],
     strategies: [
       { name: "经济航速", note: "全船队按 12kn 经济航速航行，燃油最省。" },
@@ -574,30 +572,19 @@ const SCENES = {
 
 const scene = new URLSearchParams(location.search).get("scene") || "water";
 const S = SCENES[scene] || SCENES.water;
-/* 真实地点锚：中心点为公开坐标，节点为演示点位（示意分布） */
-const PLACES = {
-  water: { center: [31.2552, 121.4747], zoom: 12, place: "上海市浦东新区", scale: 0.0016 },
-  fire: { center: [31.2402, 121.4981], zoom: 16, place: "上海市陆家嘴", scale: 0.0001 },
-  park: { center: [31.2053, 121.6143], zoom: 15, place: "上海张江科学城", scale: 0.0002 },
-  farm: { center: [36.857, 118.791], zoom: 12, place: "山东省寿光市", scale: 0.002 },
-  community: { center: [31.2552, 121.4747], zoom: 16, place: "上海市中心城区", scale: 0.00006 },
-  traffic: { center: [31.2552, 121.4747], zoom: 13, place: "上海市中心城区", scale: 0.0008 },
-  ship: { place: "上海 — 新加坡航线" },
-  company: { center: [31.2552, 121.4747], zoom: 16, place: "上海市中心城区", scale: 0.00006 },
-  mine: { center: [38.8194, 110.4897], zoom: 12, place: "陕西省神木市", scale: 0.002 },
-  oil: { center: [29.96, 121.72], zoom: 15, place: "浙江省宁波市镇海区", scale: 0.00012 },
-  warehouse: { center: [29.3069, 120.0753], zoom: 15, place: "浙江省义乌市", scale: 0.0002 },
-  factory: { center: [30.8702, 121.7688], zoom: 16, place: "特斯拉上海超级工厂（临港）", scale: 0.00008 },
-  oilfield: { center: [37.5014, 118.4973], zoom: 12, place: "山东省东营市胜利油田", scale: 0.002 },
-  pipegallery: { center: [30.8702, 121.7688], zoom: 13, place: "上海市临港新片区", scale: 0.0008 },
-  gas: { center: [31.2552, 121.4747], zoom: 12, place: "上海市中心城区", scale: 0.0016 },
-  solar: { center: [36.2842, 100.6194], zoom: 11, place: "青海省共和县", scale: 0.004 },
-  grid: { center: [31.2552, 121.4747], zoom: 12, place: "上海市浦东新区", scale: 0.0016 }
+/* 标题里显示的真实地点名（地图本身为示意图风格） */
+const PLACE = {
+  water: "上海市浦东新区", fire: "上海市陆家嘴", park: "上海张江科学城",
+  farm: "山东省寿光市", community: "上海市中心城区", traffic: "上海市中心城区",
+  ship: "上海 — 新加坡航线", company: "上海市中心城区", mine: "陕西省神木市",
+  oil: "浙江省宁波市镇海区", warehouse: "浙江省义乌市", factory: "特斯拉上海超级工厂（临港）",
+  oilfield: "山东省东营市胜利油田", pipegallery: "上海市临港新片区", gas: "上海市中心城区",
+  solar: "青海省共和县", grid: "上海市浦东新区"
 };
-const P = PLACES[scene] || PLACES.water;
+const P = PLACE[scene] || PLACE.water;
 document.title = S.name + " · 鸿甯智能 IoT 演示中心";
 document.getElementById("title").textContent = S.name;
-document.getElementById("mapTitle").textContent = S.mapTitle + " · " + P.place + " · 点节点查看详情";
+document.getElementById("mapTitle").textContent = S.mapTitle + " · " + P + " · 点节点查看详情";
 
 function fmt(v) { return typeof v === "number" ? (Number.isInteger(v) ? v.toLocaleString() : v) : v; }
 function statusText(n) {
@@ -608,71 +595,50 @@ function statusCls(n) {
   if (n.canToggle && n.on === false) return "off";
   return n.status === "ok" ? "ok" : n.status === "warn" ? "warn" : "bad";
 }
-/* WGS-84 -> GCJ-02（高德底图用），中国境外原样返回 */
-function gcj(lat, lng) {
-  if (lat < 18 || lat > 54 || lng < 73 || lng > 135) return [lat, lng];
-  const a = 6378245.0, ee = 0.00669342162296594323, pi = Math.PI;
-  function tLat(x, y) { let r = -100 + 2 * x + 3 * y + 0.2 * y * y + 0.1 * x * y + 0.2 * Math.sqrt(Math.abs(x)); r += (20 * Math.sin(6 * x * pi) + 20 * Math.sin(2 * x * pi)) * 2 / 3; r += (20 * Math.sin(y * pi) + 40 * Math.sin(y / 3 * pi)) * 2 / 3; r += (160 * Math.sin(y / 12 * pi) + 320 * Math.sin(y * pi / 30)) * 2 / 3; return r; }
-  function tLng(x, y) { let r = 300 + x + 2 * y + 0.1 * x * x + 0.1 * x * y + 0.1 * Math.sqrt(Math.abs(x)); r += (20 * Math.sin(6 * x * pi) + 20 * Math.sin(2 * x * pi)) * 2 / 3; r += (20 * Math.sin(x * pi) + 40 * Math.sin(x / 3 * pi)) * 2 / 3; r += (150 * Math.sin(x / 12 * pi) + 300 * Math.sin(x / 30 * pi)) * 2 / 3; return r; }
-  let dLat = tLat(lng - 105, lat - 35), dLng = tLng(lng - 105, lat - 35);
-  const rad = lat / 180 * pi; let m = Math.sin(rad); m = 1 - ee * m * m; const sq = Math.sqrt(m);
-  dLat = dLat * 180 / ((a * (1 - ee)) / (m * sq) * pi);
-  dLng = dLng * 180 / (a / sq * Math.cos(rad) * pi);
-  return [lat + dLat, lng + dLng];
-}
-/* 节点经纬度：船舶沿真实航线插值；港口用真实坐标；其余以地点中心 + 示意偏移 */
-function nodeLL(n) {
+function nodeXY(n) {
   if (n.kind === "ship") {
-    const pts = S.routes[n.route].pts;
-    let total = 0; const segs = [];
-    for (let i = 0; i < pts.length - 1; i++) { const len = Math.hypot(pts[i + 1][0] - pts[i][0], pts[i + 1][1] - pts[i][1]); segs.push(len); total += len; }
+    const r = S.routes[n.route];
+    const pts = r.pts;
+    let total = 0;
+    const segs = [];
+    for (let i = 0; i < pts.length - 1; i++) {
+      const len = Math.hypot(pts[i + 1][0] - pts[i][0], pts[i + 1][1] - pts[i][1]);
+      segs.push(len); total += len;
+    }
     let d = n.pos * total;
     for (let i = 0; i < segs.length; i++) {
-      if (d <= segs[i]) { const t = segs[i] ? d / segs[i] : 0; return gcj(pts[i][0] + (pts[i + 1][0] - pts[i][0]) * t, pts[i][1] + (pts[i + 1][1] - pts[i][1]) * t); }
+      if (d <= segs[i]) {
+        const t = segs[i] ? d / segs[i] : 0;
+        return [pts[i][0] + (pts[i + 1][0] - pts[i][0]) * t, pts[i][1] + (pts[i + 1][1] - pts[i][1]) * t];
+      }
       d -= segs[i];
     }
-    return gcj(pts[pts.length - 1][0], pts[pts.length - 1][1]);
+    return pts[pts.length - 1];
   }
-  if (n.lat !== undefined) return gcj(n.lat, n.lng);
-  const sc = P.scale || 0.001;
-  return gcj(P.center[0] + (n.y - 50) * sc, P.center[1] + (n.x - 50) * sc / Math.cos(P.center[0] * Math.PI / 180));
+  return [n.x, n.y];
 }
 
 let selId = S.nodes[0].id;
 const nodeById = id => S.nodes.find(n => n.id === id);
 
-let leafMap = null, leafMarkers = {}, leafStatic = null, leafViewSet = false;
-function mkIcon(n) {
-  const cls = statusCls(n);
-  const icon = n.kind === "ship" ? "🚢 " : n.kind === "port" ? "⚓ " : "";
-  const t0 = n.tele && n.tele[0] ? `<div class="mk-sub">${n.tele[0].l} ${fmt(n.tele[0].v)}${n.tele[0].u || ""}</div>` : "";
-  return L.divIcon({ className: "mk-wrap", iconSize: [120, 48], iconAnchor: [60, 8],
-    html: `<div class="mk-dot mk-${cls} ${n.id === selId ? "sel" : ""}"></div><div class="mk-label">${icon}${n.name}</div>${t0}` });
-}
 function renderMap() {
   const wrap = document.getElementById("mapWrap");
-  if (!window.L) { wrap.innerHTML = `<div style="padding:40px;color:#7d93b2;font-size:14px;">地图组件加载中…（如长时间未显示请刷新页面）</div>`; return; }
-  if (!leafMap) {
-    leafMap = L.map(wrap, { scrollWheelZoom: false });
-    L.tileLayer("https://webrd0{s}.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=1&style=8&x={x}&y={y}&z={z}", { subdomains: "1234", attribution: "© 高德地图" }).addTo(leafMap);
-    L.control.scale({ imperial: false }).addTo(leafMap);
-    leafStatic = L.layerGroup().addTo(leafMap);
-    if (S.routes) S.routes.forEach(r => { L.polyline(r.pts.map(p => gcj(p[0], p[1])), { color: "#38bdf8", weight: 2, dashArray: "8 6", opacity: 0.85 }).addTo(leafStatic); });
+  let inner = "";
+  if (S.routes) {
+    S.routes.forEach(r => {
+      inner += `<polyline points="${r.pts.map(p => p.join(",")).join(" ")}" class="route" /><text x="${(r.pts[0][0] + r.pts[r.pts.length - 1][0]) / 2}" y="${Math.min(...r.pts.map(p => p[1])) - 2}" class="route-label">${r.name}</text>`;
+    });
   }
   S.nodes.forEach(n => {
-    const ll = nodeLL(n);
-    if (leafMarkers[n.id]) { leafMarkers[n.id].setLatLng(ll); leafMarkers[n.id].setIcon(mkIcon(n)); }
-    else {
-      const m = L.marker(ll, { icon: mkIcon(n) }).addTo(leafMap);
-      m.on("click", () => { selId = n.id; renderMap(); renderDetail(); });
-      leafMarkers[n.id] = m;
-    }
+    const [x, y] = nodeXY(n);
+    const cls = statusCls(n);
+    const icon = n.kind === "ship" ? "🚢" : n.kind === "port" ? "⚓" : "";
+    inner += `<g class="map-node ${n.id === selId ? "sel" : ""}" data-id="${n.id}">
+      <circle cx="${x}" cy="${y}" r="3.2" class="dot-${cls}" />
+      <text x="${x}" y="${y - 5}" class="node-label">${icon ? icon + " " : ""}${n.name}</text></g>`;
   });
-  if (!leafViewSet) {
-    leafViewSet = true;
-    if (S.routes) { const all = S.routes.flatMap(r => r.pts.map(p => gcj(p[0], p[1]))); leafMap.fitBounds(L.latLngBounds(all), { padding: [30, 30] }); }
-    else leafMap.setView(gcj(P.center[0], P.center[1]), P.zoom || 12);
-  }
+  wrap.innerHTML = `<svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet">${inner}</svg>`;
+  wrap.querySelectorAll(".map-node").forEach(g => g.addEventListener("click", () => { selId = g.dataset.id; renderMap(); renderDetail(); }));
 }
 
 function renderDetail() {
