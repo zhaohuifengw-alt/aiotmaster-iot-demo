@@ -68,9 +68,8 @@ th { color: #8fa8cc; font-weight: 400; }
 .lamp.on .bulb { filter: none; opacity: 1; }
 .lamp .name { font-size: 13px; margin-top: 6px; }
 .lamp .state { font-size: 12px; color: #8fa8cc; }
-.section-title { font-size: 22px; margin-top: 46px; }
-.section-sub { color: #8fa8cc; font-size: 14px; margin-top: 8px; line-height: 1.7; }
-.plat-card .tag { display: inline-block; font-size: 12px; color: #22d3ee; border: 1px solid #22d3ee55; padding: 2px 9px; border-radius: 20px; margin-top: 10px; }
-.plat-card .acct { font-size: 13px; color: #c6d6f2; margin-top: 12px; line-height: 1.8; word-break: break-all; }
-.plat-card .acct code { background: #081226; border: 1px solid #1c3358; padding: 2px 8px; border-radius: 6px; color: #fbbf24; font-size: 12.5px; }
-.plat-card .note { color: #fbbf24; font-size: 12.5px; margin-top: 8px; }
+.topbtn { background: #22d3ee; color: #06202a; font-weight: 700; padding: 9px 18px; border-radius: 9px; border: 0; cursor: pointer; font-size: 14px; }
+.topbtn:hover { background: #67e8f9; }
+.reg-note { font-size: 13px; margin-top: 12px; min-height: 18px; color: #8fa8cc; }
+.reg-note.err { color: #f87171; }
+.reg-note.ok { color: #34d399; }
