@@ -65,12 +65,16 @@
   .btn.danger:hover{ border-color:var(--red); color:var(--red); }
   .btn.sm{ padding:3px 10px; font-size:12px; }
   /* ---------- map ---------- */
-  .map-wrap{ background:radial-gradient(1200px 500px at 40% 0%, #10203c 0%, var(--panel2) 60%); border-radius:10px; overflow:hidden; }
-  svg text{ user-select:none; }
-  .light-dot{ cursor:pointer; }
-  .light-dot:hover{ filter:brightness(1.5); }
-  .fault-pulse{ animation:pulse 1.4s ease-out infinite; transform-origin:center; transform-box:fill-box; }
-  @keyframes pulse{ 0%{ transform:scale(.6); opacity:.9;} 100%{ transform:scale(2.6); opacity:0;} }
+  #lampList{ max-height:470px; overflow-y:auto; padding-right:4px; }
+  .lamp-road{ margin-bottom:14px; }
+  .lamp-road-title{ font-size:13px; color:var(--sub); margin-bottom:8px; }
+  .lamp-road-title b{ color:var(--txt); font-weight:600; }
+  .lamp-chips{ display:flex; flex-wrap:wrap; gap:6px; }
+  .lamp-chip{ display:inline-flex; align-items:center; gap:6px; background:#0b1626; border:1px solid var(--line);
+    color:var(--txt); font-size:12px; padding:5px 9px; border-radius:7px; cursor:pointer; font-variant-numeric:tabular-nums; }
+  .lamp-chip:hover{ border-color:var(--cyan); }
+  .lamp-chip.sel{ border-color:#fff; box-shadow:0 0 0 1px #fff; }
+  .lamp-chip i{ width:8px; height:8px; border-radius:50%; flex:none; }
   /* ---------- detail ---------- */
   .detail-id{ display:flex; align-items:baseline; gap:10px; }
   .detail-id .id{ font-size:19px; font-weight:700; }
@@ -143,7 +147,7 @@
 <div class="layout">
   <aside class="sidebar">
     <div class="nav-item active">📊 运行总览</div>
-    <div class="nav-item" data-demo>🗺️ 地图监控</div>
+    <div class="nav-item" data-demo>💡 灯具列表</div>
     <div class="nav-item" data-demo>💡 单灯控制</div>
     <div class="nav-item" data-demo>🕐 分组策略</div>
     <div class="nav-item" data-demo>⚡ 能耗分析</div>
@@ -166,7 +170,7 @@
     <section class="grid-mid">
       <div class="panel">
         <div class="panel-head">
-          <h2>区域地图 · 世纪大道片区（示意）</h2>
+          <h2>灯具列表 · 世纪大道片区</h2>
           <div class="spacer"></div>
           <div class="legend">
             <span><i style="background:var(--green)"></i>正常</span>
@@ -178,10 +182,8 @@
           <button class="btn sm" onclick="allLights(40)">节能模式</button>
           <button class="btn sm danger" onclick="allLights(0)">全关</button>
         </div>
-        <div class="map-wrap">
-          <svg id="map" viewBox="0 0 820 500" width="100%" height="470" aria-label="路灯分布地图"></svg>
-        </div>
-        <div style="font-size:12px;color:var(--sub);margin-top:8px;">点击地图上任意灯点可查看单灯详情并远程控制；本片区共 60 盏示意灯位，全区共 1,280 盏。</div>
+        <div id="lampList"></div>
+        <div style="font-size:12px;color:var(--sub);margin-top:8px;">点击任意灯具查看单灯详情并远程控制；本片区共 60 盏示意灯位，全区共 1,280 盏。</div>
       </div>
 
       <div class="panel">
@@ -270,33 +272,6 @@ const STATUS_TXT = { on:["正常运行","st-on"], dim:["调光节能","st-dim"],
 let selected = lights[0];
 
 /* ================= 地图渲染 ================= */
-const svg = document.getElementById("map");
-const NS = "http://www.w3.org/2000/svg";
-function el(tag, attrs){ const e=document.createElementNS(NS,tag); for(const k in attrs) e.setAttribute(k,attrs[k]); return e; }
-// 地块
-for(let gx=0; gx<8; gx++) for(let gy=0; gy<5; gy++){
-  svg.appendChild(el("rect",{x:18+gx*100, y:16+gy*97, width:88, height:84, rx:8, fill:"#0e1a2e", stroke:"#152642", "stroke-width":1}));
-}
-// 黄浦江
-const river = el("path",{ d:"M795,-10 C760,120 815,240 780,360 C760,430 800,480 790,520 L840,520 L840,-10 Z", fill:"rgba(14,116,144,.35)" });
-svg.appendChild(river);
-const riverTx = el("text",{x:788, y:250, fill:"#3d6f8f", "font-size":13, transform:"rotate(90 792 250)", "letter-spacing":6});
-riverTx.textContent="黄 浦 江"; svg.appendChild(riverTx);
-// 公园/地标
-svg.appendChild(el("rect",{x:600,y:330,width:120,height:70,rx:10,fill:"rgba(45,212,191,.08)",stroke:"rgba(45,212,191,.25)"}));
-const parkTx = el("text",{x:660,y:370,fill:"#3f8272","font-size":12,"text-anchor":"middle"}); parkTx.textContent="世纪公园"; svg.appendChild(parkTx);
-const lm = el("text",{x:120,y:80,fill:"#46638a","font-size":13}); lm.textContent="陆家嘴金融区"; svg.appendChild(lm);
-const lm2 = el("text",{x:600,y:455,fill:"#46638a","font-size":12}); lm2.textContent="上海科技馆"; svg.appendChild(lm2);
-// 道路
-ROADS.forEach(r=>{
-  svg.appendChild(el("line",{x1:r.pts[0][0],y1:r.pts[0][1],x2:r.pts[1][0],y2:r.pts[1][1],stroke:"#22385e","stroke-width":15,"stroke-linecap":"round"}));
-  svg.appendChild(el("line",{x1:r.pts[0][0],y1:r.pts[0][1],x2:r.pts[1][0],y2:r.pts[1][1],stroke:"#314e7d","stroke-width":1.4,"stroke-dasharray":"10 8"}));
-  const mx=(r.pts[0][0]+r.pts[1][0])/2, my=(r.pts[0][1]+r.pts[1][1])/2;
-  const t=el("text",{x:mx, y:my-14, fill:"#5b7ba6","font-size":13,"text-anchor":"middle","letter-spacing":3});
-  t.textContent=r.name; svg.appendChild(t);
-});
-// 灯点
-const dotLayer = el("g",{}); svg.appendChild(dotLayer);
 function colorOf(L){
   if(L.status==="fault") return "#f87171";
   if(L.status==="offline") return "#64748b";
@@ -304,16 +279,19 @@ function colorOf(L){
   return "#34d399";
 }
 function drawLights(){
-  dotLayer.innerHTML="";
-  lights.forEach(L=>{
-    const g = el("g",{class:"light-dot"});
-    if(L.status==="fault") g.appendChild(el("circle",{cx:L.x, cy:L.y, r:7, fill:"none", stroke:"#f87171","stroke-width":1.6, class:"fault-pulse"}));
-    const glowR = L.status==="on"||L.status==="dim" ? 6+L.brightness*0.14 : 0;
-    if(glowR>0) g.appendChild(el("circle",{cx:L.x, cy:L.y, r:glowR, fill:colorOf(L), opacity:0.16}));
-    g.appendChild(el("circle",{cx:L.x, cy:L.y, r:4.4, fill:colorOf(L), stroke: selected===L?"#ffffff":"#0a1120","stroke-width": selected===L?2:1.2}));
-    g.addEventListener("click",()=>selectLight(L));
-    dotLayer.appendChild(g);
+  const box = document.getElementById("lampList");
+  if (!box) return;
+  let html = "";
+  ROADS.forEach(r => {
+    const members = lights.filter(L => L.road === r.name);
+    html += `<div class="lamp-road"><div class="lamp-road-title"><b>${r.name}</b> · ${members.length} 盏</div><div class="lamp-chips">` +
+      members.map(L => `<button class="lamp-chip ${selected === L ? "sel" : ""}" data-id="${L.id}"><i style="background:${colorOf(L)}"></i>${L.id}</button>`).join("") + `</div></div>`;
   });
+  box.innerHTML = html;
+  box.querySelectorAll(".lamp-chip").forEach(b => b.addEventListener("click", () => {
+    const L = lights.find(x => x.id === b.dataset.id);
+    if (L) selectLight(L);
+  }));
 }
 /* ================= 详情面板 ================= */
 const $ = id=>document.getElementById(id);
@@ -481,7 +459,7 @@ selectLight(lights[0]);
 renderGroups();
 renderAlerts();
 drawLights();
-setTimeout(()=>toast("👋 欢迎使用智慧路灯云管理平台演示系统：点击地图灯点可单灯调光，分组控制与告警处理均可交互演示"), 600);
+setTimeout(()=>toast("👋 欢迎使用智慧路灯云管理平台演示系统：点击灯具列表可单灯调光，分组控制与告警处理均可交互演示"), 600);
 </script>
 </body>
 </html>
