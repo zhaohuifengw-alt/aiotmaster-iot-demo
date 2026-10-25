@@ -15,33 +15,12 @@
 <div class="wrap">
   <div class="hero">
     <h1>选一个场景，直接进入演示大屏</h1>
-    <p>七个行业演示，开箱即看，数据为模拟生成。点卡片用演示账号登录，即进该场景的监控大屏；企业用户可提交入驻申请。</p>
+    <p>点击卡片，进入场景演示。</p>
   </div>
-  <div class="demo-account">
-    <span>通用演示账号</span>
-    <span>账号 <code>demo@aiotmaster.cn</code></span>
-    <span>密码 <code>demo123</code></span>
-    <span>（已预填，点“进入演示”即可）</span>
-  </div>
+
   <div class="grid" id="cards"></div>
   <div class="footer">
-    演示数据为模拟数据，仅用于方案演示 · 鸿甯智能 GEO + AI 落地服务<br>
-    <a href="https://aiotmaster.cn">返回 aiotmaster.cn 官网</a>
-  </div>
-</div>
-
-<div class="modal-bg" id="modalBg">
-  <div class="modal">
-    <h3 id="modalTitle">进入演示</h3>
-    <p id="modalDesc"></p>
-    <label>演示账号</label>
-    <input id="account" value="demo@aiotmaster.cn">
-    <label>密码</label>
-    <input id="password" type="password" value="demo123">
-    <div class="row">
-      <button class="btn ghost" onclick="closeModal()">取消</button>
-      <button class="btn" onclick="enterDemo()">进入演示</button>
-    </div>
+    鸿甯智能 · IoT 演示中心 · <a href="https://aiotmaster.cn">aiotmaster.cn</a>
   </div>
 </div>
 
@@ -65,15 +44,14 @@
 
 <script>
 const SCENES = {
-  water: { name: "智慧水务", icon: "💧", desc: "供水管网、水质、漏损全景监控：取水、供水、管网压力与水质合格率实时在线。", s1: ["128", "监测点"], s2: ["98.2%", "设备在线率"], modal: "供水管网演示：泵站、管网压力、水质指标与漏损告警。" },
-  fire:  { name: "智慧消防", icon: "🔥", desc: "联网单位、烟感温感、消防水压与火警处置：告警分级推送，处置闭环可查。", s1: ["2,340", "探测器"], s2: ["99.1%", "设备在线率"], modal: "消防演示：烟感、温感、水压、水箱液位与火警工单。" },
-  park:  { name: "智慧园区", icon: "🏢", desc: "楼宇能耗、停车、门禁、环境与安防一张屏：园区运行状态与节能趋势一目了然。", s1: ["56", "栋楼宇"], s2: ["96.8%", "设备在线率"], modal: "园区演示：能耗、停车占用、门禁通行与环境监测。" },
-  light: { name: "智慧路灯", icon: "💡", desc: "区域地图完整版：点地图灯点调光、分组策略、能耗分析与实时告警一应俱全。", s1: ["3,860", "盏路灯"], s2: ["99.4%", "亮灯率"], modal: "路灯完整演示：区域地图、单灯控制、分组策略与能耗分析。" },
-  farm: { name: "智慧农业", icon: "🌾", desc: "温室环境、灌溉阀门与土壤墒情：温度、湿度、节水一张屏。", s1: ["86", "座温室"], s2: ["97.5%", "设备在线率"], modal: "农业演示：温室环境、灌溉控制与墒情监测。" },
-  community: { name: "智慧社区", icon: "🏘️", desc: "门禁通行、停车、物业工单与安防：小区运行状态实时在线。", s1: ["12", "个小区"], s2: ["98.6%", "设备在线率"], modal: "社区演示：门禁、停车、工单与安防监控。" },
-  traffic: { name: "智慧交通", icon: "🚦", desc: "路口流量、信号配时与违停抓拍：路网运行与拥堵处置一屏可见。", s1: ["342", "个路口"], s2: ["99.0%", "信号在线率"], modal: "交通演示：路口流量、信号状态与违停抓拍。" }
+  water: { name: "智慧水务", icon: "💧", desc: "供水管网、水质、漏损全景监控", s1: ["128", "监测点"], s2: ["98.2%", "设备在线率"] },
+  fire:  { name: "智慧消防", icon: "🔥", desc: "联网单位、烟感温感、火警处置闭环", s1: ["2,340", "探测器"], s2: ["99.1%", "设备在线率"] },
+  park:  { name: "智慧园区", icon: "🏢", desc: "楼宇能耗、停车、门禁、安防一张屏", s1: ["56", "栋楼宇"], s2: ["96.8%", "设备在线率"] },
+  light: { name: "智慧路灯", icon: "💡", desc: "区域地图完整版：单灯控制、分组策略、能耗分析", s1: ["3,860", "盏路灯"], s2: ["99.4%", "亮灯率"] },
+  farm: { name: "智慧农业", icon: "🌾", desc: "温室环境、灌溉、土壤墒情一张屏", s1: ["86", "座温室"], s2: ["97.5%", "设备在线率"] },
+  community: { name: "智慧社区", icon: "🏘️", desc: "门禁通行、停车、物业工单与安防", s1: ["12", "个小区"], s2: ["98.6%", "设备在线率"] },
+  traffic: { name: "智慧交通", icon: "🚦", desc: "路口流量、信号配时、违停抓拍", s1: ["342", "个路口"], s2: ["99.0%", "信号在线率"] }
 };
-let current = "water";
 const grid = document.getElementById("cards");
 Object.entries(SCENES).forEach(([key, s]) => {
   const d = document.createElement("div");
@@ -81,18 +59,10 @@ Object.entries(SCENES).forEach(([key, s]) => {
   d.innerHTML = `<div class="icon">${s.icon}</div><h3>${s.name}</h3><p>${s.desc}</p>
     <div class="stats"><div><b>${s.s1[0]}</b>${s.s1[1]}</div><div><b>${s.s2[0]}</b>${s.s2[1]}</div></div>
     <button class="btn">进入演示</button>`;
-  d.onclick = () => openModal(key);
+  d.onclick = () => { location.href = key === "light" ? "light/index.html" : "dashboard.html?scene=" + key; };
   grid.appendChild(d);
 });
-function openModal(key) {
-  current = key;
-  document.getElementById("modalTitle").textContent = "进入演示 · " + SCENES[key].name;
-  document.getElementById("modalDesc").textContent = SCENES[key].modal;
-  document.getElementById("modalBg").classList.add("open");
-}
-function closeModal() { document.getElementById("modalBg").classList.remove("open"); }
-function enterDemo() { location.href = current === "light" ? "light/index.html" : "dashboard.html?scene=" + current; }
-document.getElementById("modalBg").addEventListener("click", e => { if (e.target.id === "modalBg") closeModal(); });
+
 function openReg() { document.getElementById("regNote").textContent = ""; document.getElementById("regNote").className = "reg-note"; document.getElementById("regBg").classList.add("open"); }
 function closeReg() { document.getElementById("regBg").classList.remove("open"); }
 document.getElementById("regBg").addEventListener("click", e => { if (e.target.id === "regBg") closeReg(); });
