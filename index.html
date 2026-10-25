@@ -14,7 +14,7 @@
 <div class="wrap">
   <div class="hero">
     <h1>选一个场景，直接进入演示大屏</h1>
-    <p>四个行业演示，开箱即看：实时数据、设备状态、告警动态均为模拟演示数据，无需注册、无需接真实设备。<br>点卡片进入演示账号，登录后即是该场景的监控大屏。</p>
+    <p>七个行业演示，开箱即看：实时数据、设备状态、告警动态均为模拟演示数据，无需注册、无需接真实设备。<br>点卡片进入演示账号，登录后即是该场景的监控大屏。</p>
   </div>
   <div class="demo-account">
     <span>通用演示账号</span>
@@ -23,6 +23,9 @@
     <span>（已预填，点“进入演示”即可）</span>
   </div>
   <div class="grid" id="cards"></div>
+  <h2 class="section-title">第三方平台演示入口</h2>
+  <p class="section-sub">下面是公开的第三方物联网平台演示站，点“打开演示站”在新窗口进入，用卡片上的演示账号登录即可体验它们的真实后台。账号均为对方公开的演示账号。</p>
+  <div class="grid" id="platGrid"></div>
   <div class="footer">
     演示数据为模拟数据，仅用于方案演示 · 鸿甯智能 GEO + AI 落地服务<br>
     <a href="https://aiotmaster.cn">返回 aiotmaster.cn 官网</a>
@@ -49,7 +52,10 @@ const SCENES = {
   water: { name: "智慧水务", icon: "💧", desc: "供水管网、水质、漏损全景监控：取水、供水、管网压力与水质合格率实时在线。", s1: ["128", "监测点"], s2: ["98.2%", "设备在线率"], modal: "供水管网演示：泵站、管网压力、水质指标与漏损告警。" },
   fire:  { name: "智慧消防", icon: "🔥", desc: "联网单位、烟感温感、消防水压与火警处置：告警分级推送，处置闭环可查。", s1: ["2,340", "探测器"], s2: ["99.1%", "设备在线率"], modal: "消防演示：烟感、温感、水压、水箱液位与火警工单。" },
   park:  { name: "智慧园区", icon: "🏢", desc: "楼宇能耗、停车、门禁、环境与安防一张屏：园区运行状态与节能趋势一目了然。", s1: ["56", "栋楼宇"], s2: ["96.8%", "设备在线率"], modal: "园区演示：能耗、停车占用、门禁通行与环境监测。" },
-  light: { name: "智慧路灯", icon: "💡", desc: "单灯控制、亮灯率与节能账本：点一点就能开关单灯，节能收益实时算给你看。", s1: ["3,860", "盏路灯"], s2: ["99.4%", "亮灯率"], modal: "路灯演示：单灯开关、亮灯率、故障灯与节能电量。" }
+  light: { name: "智慧路灯", icon: "💡", desc: "单灯控制、亮灯率与节能账本：点一点就能开关单灯，节能收益实时算给你看。", s1: ["3,860", "盏路灯"], s2: ["99.4%", "亮灯率"], modal: "路灯演示：单灯开关、亮灯率、故障灯与节能电量。" },
+  farm: { name: "智慧农业", icon: "🌾", desc: "温室环境、灌溉阀门与土壤墒情：温度、湿度、节水一张屏。", s1: ["86", "座温室"], s2: ["97.5%", "设备在线率"], modal: "农业演示：温室环境、灌溉控制与墒情监测。" },
+  community: { name: "智慧社区", icon: "🏘️", desc: "门禁通行、停车、物业工单与安防：小区运行状态实时在线。", s1: ["12", "个小区"], s2: ["98.6%", "设备在线率"], modal: "社区演示：门禁、停车、工单与安防监控。" },
+  traffic: { name: "智慧交通", icon: "🚦", desc: "路口流量、信号配时与违停抓拍：路网运行与拥堵处置一屏可见。", s1: ["342", "个路口"], s2: ["99.0%", "信号在线率"], modal: "交通演示：路口流量、信号状态与违停抓拍。" }
 };
 let current = "water";
 const grid = document.getElementById("cards");
@@ -71,6 +77,25 @@ function openModal(key) {
 function closeModal() { document.getElementById("modalBg").classList.remove("open"); }
 function enterDemo() { location.href = "dashboard.html?scene=" + current; }
 document.getElementById("modalBg").addEventListener("click", e => { if (e.target.id === "modalBg") closeModal(); });
+const PLATS = [
+  { name: "JetLinks", tag: "国产开源 · 最接近捷码", desc: "Java 开源、MQTT/TCP/Modbus 全协议、多租户、可视化大屏、规则引擎，很多项目选型对标捷码。", url: "https://demo.jetlinks.cn", acct: "账号 <code>test</code> / 密码 <code>test123456</code>" },
+  { name: "DGIOT", tag: "国产工业轻量", desc: "主打工业、Modbus、组态画面，轻量化，国内很多集成商用。", url: "https://prod.dgiotcloud.cn", acct: "账号 <code>dgiot_admin</code> / 密码 <code>dgiot_admin</code>（开发账号 <code>dgiot_dev</code> / <code>dgiot_dev</code>）" },
+  { name: "BudIot 萌发物联网", tag: "简洁易上手", desc: "支持对接 OneNET、AEP，适合学习设备接入、告警联动。", url: "https://demo.budiot.com", acct: "账号 <code>superadmin</code> / 密码 <code>1</code>" },
+  { name: "SSIOT 三三物联网", tag: "Go · MIT 开源", desc: "Go 开发、MIT 开源，简单清爽，适合快速演示。", url: "https://ssiot.cc/", acct: "账号 <code>ssiot</code> / 密码 <code>123456</code>" },
+  { name: "物联大师", tag: "云组态 · 大屏", desc: "云组态、大屏为主，偏监控画面，和捷码大屏风格很像。", url: "https://demo.zgwit.cn", acct: "账号 <code>admin</code> / 密码 <code>123456</code>", note: "本站点从当前网络未能连通，账号以对方公示为准" },
+  { name: "霜蝉工业云组态", tag: "PLC / 工控", desc: "工控、PLC 远程监控组态，适合工业场景。", url: "https://iot.scicala.com", acct: "访客 <code>scguest</code> / <code>admin123456</code>（管理 <code>scmanage</code> / <code>admin123456</code>）" },
+  { name: "NLECloud 新大陆", tag: "商用 SaaS", desc: "商用云平台，NB-IoT、4G 模组友好，企业级。", url: "http://www2.nlecloud.com/", acct: "账号 <code>18988886666</code> / 密码 <code>123456</code>" }
+];
+const platGrid = document.getElementById("platGrid");
+PLATS.forEach(p => {
+  const d = document.createElement("div");
+  d.className = "card plat-card";
+  d.innerHTML = `<h3>${p.name}</h3><span class="tag">${p.tag}</span><p>${p.desc}</p>
+    <div class="acct">演示账号：${p.acct}</div>
+    ${p.note ? `<div class="note">⚠ ${p.note}</div>` : ""}
+    <a class="btn" href="${p.url}" target="_blank" rel="noopener">打开演示站 ↗</a>`;
+  platGrid.appendChild(d);
+});
 </script>
 </body>
 </html>
