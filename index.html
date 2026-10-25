@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>鸿甯智能 · IoT 演示中心</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="topbar">
+  <div class="logo"><span>鸿甯智能</span> · IoT 演示中心</div>
+  <div class="sub">iot.aiotmaster.cn</div>
+</div>
+<div class="wrap">
+  <div class="hero">
+    <h1>选一个场景，直接进入演示大屏</h1>
+    <p>四个行业演示，开箱即看：实时数据、设备状态、告警动态均为模拟演示数据，无需注册、无需接真实设备。<br>点卡片进入演示账号，登录后即是该场景的监控大屏。</p>
+  </div>
+  <div class="demo-account">
+    <span>通用演示账号</span>
+    <span>账号 <code>demo@aiotmaster.cn</code></span>
+    <span>密码 <code>demo123</code></span>
+    <span>（已预填，点“进入演示”即可）</span>
+  </div>
+  <div class="grid" id="cards"></div>
+  <div class="footer">
+    演示数据为模拟数据，仅用于方案演示 · 鸿甯智能 GEO + AI 落地服务<br>
+    <a href="https://aiotmaster.cn">返回 aiotmaster.cn 官网</a>
+  </div>
+</div>
+
+<div class="modal-bg" id="modalBg">
+  <div class="modal">
+    <h3 id="modalTitle">进入演示</h3>
+    <p id="modalDesc"></p>
+    <label>演示账号</label>
+    <input id="account" value="demo@aiotmaster.cn">
+    <label>密码</label>
+    <input id="password" type="password" value="demo123">
+    <div class="row">
+      <button class="btn ghost" onclick="closeModal()">取消</button>
+      <button class="btn" onclick="enterDemo()">进入演示</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const SCENES = {
+  water: { name: "智慧水务", icon: "💧", desc: "供水管网、水质、漏损全景监控：取水、供水、管网压力与水质合格率实时在线。", s1: ["128", "监测点"], s2: ["98.2%", "设备在线率"], modal: "供水管网演示：泵站、管网压力、水质指标与漏损告警。" },
+  fire:  { name: "智慧消防", icon: "🔥", desc: "联网单位、烟感温感、消防水压与火警处置：告警分级推送，处置闭环可查。", s1: ["2,340", "探测器"], s2: ["99.1%", "设备在线率"], modal: "消防演示：烟感、温感、水压、水箱液位与火警工单。" },
+  park:  { name: "智慧园区", icon: "🏢", desc: "楼宇能耗、停车、门禁、环境与安防一张屏：园区运行状态与节能趋势一目了然。", s1: ["56", "栋楼宇"], s2: ["96.8%", "设备在线率"], modal: "园区演示：能耗、停车占用、门禁通行与环境监测。" },
+  light: { name: "智慧路灯", icon: "💡", desc: "单灯控制、亮灯率与节能账本：点一点就能开关单灯，节能收益实时算给你看。", s1: ["3,860", "盏路灯"], s2: ["99.4%", "亮灯率"], modal: "路灯演示：单灯开关、亮灯率、故障灯与节能电量。" }
+};
+let current = "water";
+const grid = document.getElementById("cards");
+Object.entries(SCENES).forEach(([key, s]) => {
+  const d = document.createElement("div");
+  d.className = "card";
+  d.innerHTML = `<div class="icon">${s.icon}</div><h3>${s.name}</h3><p>${s.desc}</p>
+    <div class="stats"><div><b>${s.s1[0]}</b>${s.s1[1]}</div><div><b>${s.s2[0]}</b>${s.s2[1]}</div></div>
+    <button class="btn">进入演示</button>`;
+  d.onclick = () => openModal(key);
+  grid.appendChild(d);
+});
+function openModal(key) {
+  current = key;
+  document.getElementById("modalTitle").textContent = "进入演示 · " + SCENES[key].name;
+  document.getElementById("modalDesc").textContent = SCENES[key].modal;
+  document.getElementById("modalBg").classList.add("open");
+}
+function closeModal() { document.getElementById("modalBg").classList.remove("open"); }
+function enterDemo() { location.href = "dashboard.html?scene=" + current; }
+document.getElementById("modalBg").addEventListener("click", e => { if (e.target.id === "modalBg") closeModal(); });
+</script>
+</body>
+</html>

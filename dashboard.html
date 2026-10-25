@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>演示大屏 · 鸿甯智能 IoT 演示中心</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="topbar">
+  <div class="logo"><span>鸿甯智能</span> · IoT 演示中心</div>
+  <div class="sub">演示账号 demo@aiotmaster.cn · 模拟数据</div>
+</div>
+<div class="wrap">
+  <a class="back" href="index.html">← 返回演示主页</a>
+  <div class="dash-head">
+    <h1 id="title">演示大屏</h1>
+    <div class="live">● 实时模拟中 · <span id="clock"></span></div>
+  </div>
+  <div class="kpis" id="kpis"></div>
+  <div class="panels">
+    <div class="panel"><h3 id="chart1Title"></h3><canvas id="chart1"></canvas></div>
+    <div class="panel"><h3>实时告警</h3><div id="alerts"></div></div>
+  </div>
+  <div class="panels">
+    <div class="panel"><h3 id="chart2Title"></h3><canvas id="chart2"></canvas></div>
+    <div class="panel"><h3>设备状态</h3><table id="devices"></table></div>
+  </div>
+  <div class="panels" id="lightPanel" style="display:none">
+    <div class="panel" style="grid-column:1/-1"><h3>单灯控制（点灯可开关，亮灯率实时变化）</h3><div class="lamps" id="lamps"></div></div>
+  </div>
+  <div class="footer">演示数据为模拟数据，仅用于方案演示 · <a href="index.html">返回演示主页</a></div>
+</div>
+
+<script>
+const SCENES = {
+  water: {
+    name: "智慧水务 · 供水管网监控",
+    kpis: [
+      { label: "今日供水量", val: 48210, unit: "吨", trend: "较昨日 +3.2%", cls: "up" },
+      { label: "管网漏损率", val: 8.4, unit: "%", trend: "较上月 -0.6%", cls: "down" },
+      { label: "水质合格率", val: 99.8, unit: "%", trend: "连续 126 天达标", cls: "up" },
+      { label: "泵站在线", val: 24, unit: "/ 24 座", trend: "全部在线", cls: "up" }
+    ],
+    c1: "24 小时供水量（吨）", d1: [3200, 2800, 2400, 2100, 2300, 3100, 4200, 5100, 5400, 5200, 4900, 4800, 5000, 5300, 5600, 5800, 5500, 5200, 4900, 4600, 4300, 4000, 3700, 3400],
+    c2: "管网压力（MPa）", d2: [0.32, 0.31, 0.30, 0.29, 0.30, 0.32, 0.35, 0.38, 0.39, 0.38, 0.37, 0.36, 0.37, 0.38, 0.39, 0.40, 0.38, 0.37, 0.36, 0.35, 0.34, 0.33, 0.32, 0.32],
+    alerts: [
+      ["red", "压力异常", "城东 DN600 主干管压力 0.42MPa，超出阈值 · 10 分钟前"],
+      ["yellow", "水质提醒", "滨江取水口浊度 0.8NTU，接近预警线 · 32 分钟前"],
+      ["blue", "巡检完成", "北区泵站夜间巡检已完成，无异常 · 1 小时前"]
+    ],
+    devices: [["城东泵站", "运行中", "ok"], ["滨江取水口", "运行中", "ok"], ["北区加压站", "运行中", "ok"], ["城南水厂", "检修中", "warn"], ["开发区管网", "运行中", "ok"]]
+  },
+  fire: {
+    name: "智慧消防 · 联网单位监控",
+    kpis: [
+      { label: "联网单位", val: 486, unit: "家", trend: "本周新增 6 家", cls: "up" },
+      { label: "探测器在线率", val: 99.1, unit: "%", trend: "离线 21 个", cls: "warn" },
+      { label: "今日火警", val: 2, unit: "起", trend: "均已处置闭环", cls: "up" },
+      { label: "消防水压正常率", val: 98.6, unit: "%", trend: "3 处偏低已派单", cls: "warn" }
+    ],
+    c1: "24 小时告警数（次）", d1: [1, 0, 2, 0, 1, 0, 0, 1, 3, 2, 1, 0, 2, 1, 0, 1, 2, 4, 3, 1, 0, 1, 0, 0],
+    c2: "消防水压（MPa）", d2: [0.85, 0.84, 0.84, 0.83, 0.84, 0.85, 0.86, 0.87, 0.86, 0.85, 0.86, 0.87, 0.88, 0.87, 0.86, 0.86, 0.85, 0.86, 0.87, 0.86, 0.85, 0.84, 0.85, 0.85],
+    alerts: [
+      ["red", "火警确认", "万达广场 3F 烟感报警，值班员已现场确认误报 · 8 分钟前"],
+      ["yellow", "设备离线", "科技园 B 栋 2 个温感离线，已派单检修 · 25 分钟前"],
+      ["blue", "水压恢复", "滨江大厦屋顶水箱液位恢复正常 · 1 小时前"]
+    ],
+    devices: [["万达广场", "正常", "ok"], ["科技园 B 栋", "2 探测器离线", "warn"], ["滨江大厦", "正常", "ok"], ["市立医院", "正常", "ok"], ["高铁站东枢纽", "正常", "ok"]]
+  },
+  park: {
+    name: "智慧园区 · 运行一张屏",
+    kpis: [
+      { label: "今日园区能耗", val: 12840, unit: "kWh", trend: "较昨日 -5.1%", cls: "down" },
+      { label: "停车占用率", val: 72, unit: "%", trend: "剩余 214 个车位", cls: "up" },
+      { label: "今日门禁通行", val: 8932, unit: "人次", trend: "高峰 8:30-9:00", cls: "up" },
+      { label: "环境优良率", val: 94, unit: "%", trend: "PM2.5 均值 28", cls: "up" }
+    ],
+    c1: "24 小时园区能耗（kWh）", d1: [420, 380, 340, 320, 330, 400, 520, 680, 760, 720, 700, 690, 710, 740, 780, 820, 790, 720, 660, 600, 540, 500, 470, 440],
+    c2: "停车占用率（%）", d2: [30, 26, 22, 20, 21, 28, 45, 68, 82, 78, 75, 72, 70, 74, 78, 80, 76, 72, 68, 60, 52, 44, 38, 33],
+    alerts: [
+      ["yellow", "能耗提醒", "C 栋今日能耗超周均 12%，建议检查空调时段 · 20 分钟前"],
+      ["blue", "车位紧张", "A 区停车场占用率超 85%，已引导至 B 区 · 40 分钟前"],
+      ["blue", "访客预约", "今日访客预约 86 人次，门禁已同步 · 1 小时前"]
+    ],
+    devices: [["A 区停车场", "正常", "ok"], ["C 栋空调群控", "能耗偏高", "warn"], ["园区门禁", "正常", "ok"], ["环境监测站", "正常", "ok"], ["安防摄像头", "3 路离线", "warn"]]
+  },
+  light: {
+    name: "智慧路灯 · 单灯控制",
+    kpis: [
+      { label: "路灯总数", val: 3860, unit: "盏", trend: "覆盖 12 条主干道", cls: "up" },
+      { label: "亮灯率", val: 99.4, unit: "%", trend: "故障 23 盏", cls: "up", id: "litRate" },
+      { label: "本月节电量", val: 41200, unit: "kWh", trend: "较传统路灯省电 61%", cls: "down" },
+      { label: "故障待处理", val: 23, unit: "盏", trend: "已派单 18 盏", cls: "warn" }
+    ],
+    c1: "24 小时亮灯数（盏）", d1: [3860, 3860, 3860, 3860, 3860, 3200, 1800, 200, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1200, 2800, 3750, 3837, 3837, 3837, 3837],
+    c2: "节能电量（kWh/小时）", d2: [0, 0, 0, 0, 0, 180, 420, 620, 0, 0, 0, 0, 0, 0, 0, 0, 0, 240, 520, 680, 720, 720, 720, 720],
+    alerts: [
+      ["yellow", "单灯故障", "中山路 128 号灯杆控制器离线，已派单 · 15 分钟前"],
+      ["blue", "策略执行", "雨天策略已执行：主干道亮度提升至 90% · 30 分钟前"],
+      ["blue", "节能简报", "本周节电 9,840kWh，约合 8,200 元 · 2 小时前"]
+    ],
+    devices: [["中山路", "正常", "ok"], ["滨江大道", "1 盏离线", "warn"], ["科技园支路", "正常", "ok"], ["解放路", "正常", "ok"], ["环城快速路", "2 盏离线", "warn"]]
+  }
+};
+
+const scene = new URLSearchParams(location.search).get("scene") || "water";
+const S = SCENES[scene] || SCENES.water;
+document.title = S.name + " · 鸿甯智能 IoT 演示中心";
+document.getElementById("title").textContent = S.name;
+
+const kpiBox = document.getElementById("kpis");
+S.kpis.forEach(k => {
+  const d = document.createElement("div");
+  d.className = "kpi";
+  d.innerHTML = `<div class="label">${k.label}</div><div class="val" ${k.id ? `id="${k.id}"` : ""}>${k.val.toLocaleString()}<small> ${k.unit}</small></div><div class="trend ${k.cls}">${k.trend}</div>`;
+  kpiBox.appendChild(d);
+});
+
+function drawChart(id, data, color) {
+  const c = document.getElementById(id), ctx = c.getContext("2d");
+  const w = c.clientWidth, h = 180, dpr = window.devicePixelRatio || 1;
+  c.width = w * dpr; c.height = h * dpr; ctx.scale(dpr, dpr);
+  const max = Math.max(...data) * 1.15, min = Math.min(...data) * 0.85, pad = 8;
+  ctx.strokeStyle = "#1c3358"; ctx.lineWidth = 1;
+  for (let i = 1; i <= 3; i++) { const y = h * i / 4; ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke(); }
+  ctx.strokeStyle = color; ctx.lineWidth = 2; ctx.beginPath();
+  data.forEach((v, i) => {
+    const x = pad + i * (w - pad * 2) / (data.length - 1);
+    const y = h - pad - ((v - min) / (max - min)) * (h - pad * 2);
+    i ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+  });
+  ctx.stroke();
+  ctx.fillStyle = color + "33"; ctx.lineTo(w - pad, h); ctx.lineTo(pad, h); ctx.closePath(); ctx.fill();
+}
+document.getElementById("chart1Title").textContent = S.c1;
+document.getElementById("chart2Title").textContent = S.c2;
+function renderCharts() { drawChart("chart1", S.d1, "#22d3ee"); drawChart("chart2", S.d2, "#fbbf24"); }
+renderCharts();
+window.addEventListener("resize", renderCharts);
+
+document.getElementById("alerts").innerHTML = S.alerts.map(a =>
+  `<div class="alert"><span class="tag ${a[0] === "red" ? "red" : a[0] === "yellow" ? "yellow" : "blue"}">${a[1]}</span><span>${a[2]}</span></div>`).join("");
+document.getElementById("devices").innerHTML = "<tr><th>设备</th><th>状态</th></tr>" + S.devices.map(d =>
+  `<tr><td>${d[0]}</td><td><span class="dot ${d[2]}"></span>${d[1]}</td></tr>`).join("");
+
+if (scene === "light") {
+  document.getElementById("lightPanel").style.display = "grid";
+  const lampsBox = document.getElementById("lamps");
+  const lamps = Array.from({ length: 12 }, (_, i) => ({ name: "中山路 " + (101 + i) + " 号", on: i !== 3 && i !== 7 }));
+  function renderLamps() {
+    const onCount = lamps.filter(l => l.on).length;
+    const rate = (99.4 - (12 - onCount) * 0.05).toFixed(1);
+    const el = document.getElementById("litRate");
+    if (el) el.innerHTML = rate + "<small> %</small>";
+    lampsBox.innerHTML = lamps.map((l, i) =>
+      `<div class="lamp ${l.on ? "on" : ""}" data-i="${i}"><div class="bulb">💡</div><div class="name">${l.name}</div><div class="state">${l.on ? "已点亮" : "已关闭"}</div></div>`).join("");
+    lampsBox.querySelectorAll(".lamp").forEach(el => el.onclick = () => { lamps[+el.dataset.i].on = !lamps[+el.dataset.i].on; renderLamps(); });
+  }
+  renderLamps();
+}
+
+function tick() {
+  const now = new Date();
+  document.getElementById("clock").textContent = now.toLocaleString("zh-CN", { hour12: false });
+  const firstVal = document.querySelector(".kpi .val");
+  if (firstVal && !firstVal.id) {
+    const base = parseFloat(firstVal.textContent.replace(/,/g, ""));
+    if (!isNaN(base)) firstVal.innerHTML = Math.round(base * (0.995 + Math.random() * 0.01)).toLocaleString() + "<small> " + S.kpis[0].unit + "</small>";
+  }
+}
+tick(); setInterval(tick, 3000);
+</script>
+</body>
+</html>
