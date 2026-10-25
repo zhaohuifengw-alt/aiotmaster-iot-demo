@@ -8,9 +8,7 @@ a { color: inherit; text-decoration: none; }
 .wrap { max-width: 1180px; margin: 0 auto; padding: 36px 24px 60px; }
 .hero h1 { font-size: 34px; letter-spacing: 1px; }
 .hero p { color: #8fa8cc; margin-top: 10px; font-size: 15px; line-height: 1.7; }
-.demo-account { margin-top: 22px; background: #0e2a4a; border: 1px solid #22d3ee55; border-radius: 12px; padding: 16px 20px; display: flex; flex-wrap: wrap; gap: 8px 28px; align-items: center; font-size: 14px; }
-.demo-account b { color: #22d3ee; }
-.demo-account code { background: #081226; border: 1px solid #1c3358; padding: 3px 10px; border-radius: 6px; color: #fbbf24; font-size: 14px; }
+
 .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-top: 30px; }
 @media (max-width: 1000px) { .grid { grid-template-columns: repeat(2, 1fr); } }
 @media (max-width: 560px) { .grid { grid-template-columns: 1fr; } .topbar { padding: 14px 18px; } }
