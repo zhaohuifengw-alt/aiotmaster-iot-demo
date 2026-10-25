@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>智慧路灯云管理平台 · 鸿甯智能</title>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  :root{
+    --bg:#0a1120; --panel:#101c31; --panel2:#0d1728; --line:#1e3050;
+    --txt:#dbe7f5; --sub:#7d93b2; --cyan:#22d3ee; --teal:#2dd4bf;
+    --green:#34d399; --amber:#fbbf24; --red:#f87171; --gray:#64748b;
+  }
+  body{ background:var(--bg); color:var(--txt); font-family:"Segoe UI","Microsoft YaHei","PingFang SC",sans-serif; min-height:100vh; }
+  /* ---------- top bar ---------- */
+  .topbar{ height:60px; display:flex; align-items:center; gap:16px; padding:0 20px;
+    background:linear-gradient(90deg,#0d1830,#0a1120); border-bottom:1px solid var(--line); position:sticky; top:0; z-index:50; }
+  .logo{ display:flex; align-items:center; gap:12px; }
+  .logo-mark{ width:38px; height:38px; border-radius:10px; background:linear-gradient(135deg,#0e7490,#22d3ee);
+    display:flex; align-items:center; justify-content:center; font-size:20px; box-shadow:0 0 18px rgba(34,211,238,.45); }
+  .logo h1{ font-size:18px; letter-spacing:1px; }
+  .logo h1 span{ color:var(--cyan); }
+  .logo small{ display:block; font-size:11px; color:var(--sub); letter-spacing:2px; }
+  .demo-badge{ background:rgba(251,191,36,.15); color:var(--amber); border:1px solid rgba(251,191,36,.4);
+    font-size:12px; padding:3px 10px; border-radius:20px; }
+  .top-right{ margin-left:auto; display:flex; align-items:center; gap:18px; color:var(--sub); font-size:13px; }
+  .top-right b{ color:var(--txt); font-weight:600; }
+  .clock{ font-size:16px; color:var(--txt); font-variant-numeric:tabular-nums; }
+  .avatar{ width:34px; height:34px; border-radius:50%; background:linear-gradient(135deg,#334155,#0ea5e9);
+    display:flex; align-items:center; justify-content:center; color:#fff; font-size:13px; }
+  /* ---------- layout ---------- */
+  .layout{ display:flex; }
+  .sidebar{ width:172px; flex:none; padding:16px 10px; border-right:1px solid var(--line); min-height:calc(100vh - 60px); }
+  .nav-item{ display:flex; align-items:center; gap:10px; padding:11px 12px; border-radius:8px; color:var(--sub);
+    font-size:14px; cursor:pointer; margin-bottom:4px; }
+  .nav-item:hover{ background:#13233d; color:var(--txt); }
+  .nav-item.active{ background:linear-gradient(90deg,rgba(34,211,238,.18),rgba(34,211,238,.04)); color:var(--cyan); }
+  .nav-badge{ margin-left:auto; background:var(--red); color:#fff; font-size:11px; min-width:18px; height:18px;
+    border-radius:9px; display:flex; align-items:center; justify-content:center; padding:0 5px; }
+  main{ flex:1; padding:16px 18px 8px; min-width:0; }
+  /* ---------- KPI ---------- */
+  .kpis{ display:grid; grid-template-columns:repeat(5,1fr); gap:14px; margin-bottom:14px; }
+  .kpi{ background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:14px 16px; position:relative; overflow:hidden; }
+  .kpi::before{ content:""; position:absolute; left:0; top:0; bottom:0; width:3px; background:var(--cyan); }
+  .kpi.warn::before{ background:var(--red); }
+  .kpi .label{ font-size:13px; color:var(--sub); margin-bottom:6px; }
+  .kpi .value{ font-size:27px; font-weight:700; font-variant-numeric:tabular-nums; }
+  .kpi .value small{ font-size:13px; color:var(--sub); font-weight:400; margin-left:4px; }
+  .kpi .delta{ font-size:12px; margin-top:4px; color:var(--teal); }
+  .kpi.warn .delta{ color:var(--red); }
+  /* ---------- panels ---------- */
+  .grid-mid{ display:grid; grid-template-columns:1fr 320px; gap:14px; margin-bottom:14px; }
+  .grid-bot{ display:grid; grid-template-columns:1.25fr 1fr 1fr; gap:14px; }
+  .panel{ background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:14px 16px; }
+  .panel-head{ display:flex; align-items:center; gap:10px; margin-bottom:10px; }
+  .panel-head h2{ font-size:15px; font-weight:600; }
+  .panel-head .spacer{ flex:1; }
+  .legend{ display:flex; gap:12px; font-size:12px; color:var(--sub); }
+  .legend i{ display:inline-block; width:9px; height:9px; border-radius:50%; margin-right:4px; }
+  .btn{ background:#173156; color:var(--txt); border:1px solid #2a4a7f; padding:6px 13px; border-radius:7px;
+    font-size:13px; cursor:pointer; transition:.15s; }
+  .btn:hover{ background:#1d3d6b; border-color:var(--cyan); }
+  .btn.primary{ background:linear-gradient(90deg,#0369a1,#0891b2); border-color:#0e7490; color:#fff; }
+  .btn.danger:hover{ border-color:var(--red); color:var(--red); }
+  .btn.sm{ padding:3px 10px; font-size:12px; }
+  /* ---------- map ---------- */
+  .map-wrap{ background:radial-gradient(1200px 500px at 40% 0%, #10203c 0%, var(--panel2) 60%); border-radius:10px; overflow:hidden; }
+  svg text{ user-select:none; }
+  .light-dot{ cursor:pointer; }
+  .light-dot:hover{ filter:brightness(1.5); }
+  .fault-pulse{ animation:pulse 1.4s ease-out infinite; transform-origin:center; transform-box:fill-box; }
+  @keyframes pulse{ 0%{ transform:scale(.6); opacity:.9;} 100%{ transform:scale(2.6); opacity:0;} }
+  /* ---------- detail ---------- */
+  .detail-id{ display:flex; align-items:baseline; gap:10px; }
+  .detail-id .id{ font-size:19px; font-weight:700; }
+  .status-badge{ font-size:12px; padding:2px 10px; border-radius:12px; }
+  .st-on{ background:rgba(52,211,153,.15); color:var(--green); border:1px solid rgba(52,211,153,.4); }
+  .st-dim{ background:rgba(251,191,36,.13); color:var(--amber); border:1px solid rgba(251,191,36,.4); }
+  .st-fault{ background:rgba(248,113,113,.13); color:var(--red); border:1px solid rgba(248,113,113,.4); }
+  .st-offline{ background:rgba(100,116,139,.15); color:#94a3b8; border:1px solid rgba(100,116,139,.45); }
+  .meta{ font-size:12.5px; color:var(--sub); line-height:1.9; margin:8px 0 4px; }
+  .meta b{ color:var(--txt); font-weight:500; }
+  .bright-big{ text-align:center; padding:8px 0 2px; }
+  .bright-big .num{ font-size:42px; font-weight:700; color:var(--cyan); font-variant-numeric:tabular-nums; }
+  .bright-big .cap{ font-size:12px; color:var(--sub); }
+  input[type=range]{ width:100%; accent-color:var(--cyan); height:28px; cursor:pointer; }
+  .switch-row{ display:flex; gap:8px; margin:8px 0; }
+  .switch-row .btn{ flex:1; }
+  .seg{ display:flex; background:#0b1626; border:1px solid var(--line); border-radius:8px; overflow:hidden; margin:6px 0 12px; }
+  .seg div{ flex:1; text-align:center; padding:7px 0; font-size:13px; color:var(--sub); cursor:pointer; }
+  .seg div.on{ background:#164e63; color:#fff; }
+  .tele{ display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  .tele .cell{ background:var(--panel2); border:1px solid var(--line); border-radius:8px; padding:8px 10px; }
+  .tele .k{ font-size:11.5px; color:var(--sub); }
+  .tele .v{ font-size:16.5px; font-weight:600; margin-top:2px; font-variant-numeric:tabular-nums; }
+  .tele .v small{ font-size:11px; color:var(--sub); font-weight:400; }
+  /* ---------- groups / alerts ---------- */
+  .group-row{ display:flex; align-items:center; gap:10px; padding:9px 0; border-bottom:1px dashed #1c2c47; }
+  .group-row:last-of-type{ border-bottom:none; }
+  .group-row .gname{ width:86px; font-size:13.5px; }
+  .group-row .gcount{ color:var(--sub); font-size:12px; width:64px; }
+  .group-row .gbright{ margin-left:auto; color:var(--cyan); font-weight:600; font-variant-numeric:tabular-nums; }
+  .strategy{ margin-top:10px; background:rgba(45,212,191,.06); border:1px solid rgba(45,212,191,.25);
+    border-radius:9px; padding:10px 12px; font-size:12.5px; line-height:2; color:#a7c4de; }
+  .strategy b{ color:var(--teal); }
+  .alert-list{ max-height:308px; overflow-y:auto; }
+  .alert-item{ display:flex; gap:10px; padding:9px 2px; border-bottom:1px dashed #1c2c47; font-size:13px; align-items:flex-start; }
+  .alert-item:last-child{ border-bottom:none; }
+  .alert-ico{ flex:none; width:26px; height:26px; border-radius:7px; display:flex; align-items:center; justify-content:center; font-size:13px; }
+  .ai-red{ background:rgba(248,113,113,.15); } .ai-amber{ background:rgba(251,191,36,.15); } .ai-gray{ background:rgba(100,116,139,.2); }
+  .alert-item .at{ color:var(--sub); font-size:11.5px; margin-top:2px; }
+  .alert-item .handle{ margin-left:auto; flex:none; }
+  #chart{ width:100%; height:308px; }
+  footer{ text-align:center; color:#43597a; font-size:12px; padding:12px 0 18px; }
+  /* ---------- toast ---------- */
+  #toasts{ position:fixed; right:22px; bottom:22px; z-index:99; display:flex; flex-direction:column; gap:8px; }
+  .toast{ background:#122540; border:1px solid var(--cyan); color:var(--txt);
+    padding:11px 16px; border-radius:9px; font-size:13.5px; box-shadow:0 8px 30px rgba(0,0,0,.5); animation:tin .25s ease; max-width:360px; }
+  @keyframes tin{ from{ transform:translateY(8px); opacity:0;} to{ transform:none; opacity:1;} }
+  @media (max-width:1200px){ .kpis{ grid-template-columns:repeat(3,1fr);} .grid-mid,.grid-bot{ grid-template-columns:1fr; } .sidebar{ display:none; } }
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="logo">
+    <div class="logo-mark">💡</div>
+    <div>
+      <h1>鸿甯智能 <span>· 智慧路灯云管理平台</span></h1>
+      <small>SMART STREET LIGHTING PLATFORM</small>
+    </div>
+  </div>
+  <span class="demo-badge">演示系统</span>
+  <div class="top-right">
+    <a href="../index.html" style="color:var(--cyan);">← IoT 演示中心</a>
+    <div>区域：<b>上海市 · 浦东新区</b></div>
+    <div>天气：<b>晴 18°C</b></div>
+    <div class="clock" id="clock">--:--:--</div>
+    <div class="avatar">管理员</div>
+  </div>
+</header>
+
+<div class="layout">
+  <aside class="sidebar">
+    <div class="nav-item active">📊 运行总览</div>
+    <div class="nav-item" data-demo>🗺️ 地图监控</div>
+    <div class="nav-item" data-demo>💡 单灯控制</div>
+    <div class="nav-item" data-demo>🕐 分组策略</div>
+    <div class="nav-item" data-demo>⚡ 能耗分析</div>
+    <div class="nav-item" data-demo>🚨 告警中心 <span class="nav-badge" id="navAlarm">7</span></div>
+    <div class="nav-item" data-demo>🗂️ 设备台账</div>
+    <div class="nav-item" data-demo>⚙️ 系统设置</div>
+  </aside>
+
+  <main>
+    <!-- KPI -->
+    <section class="kpis">
+      <div class="kpi"><div class="label">接入路灯总数</div><div class="value" id="kpiTotal">1,280<small>盏</small></div><div class="delta">覆盖 36 条道路 · 4 个片区</div></div>
+      <div class="kpi"><div class="label">设备在线率</div><div class="value" id="kpiOnline">98.6<small>%</small></div><div class="delta">NB-IoT / 4G 单灯控制器</div></div>
+      <div class="kpi"><div class="label">今日累计用电</div><div class="value"><span id="kpiEnergy">3,246.8</span><small>kWh</small></div><div class="delta">数据实时更新中</div></div>
+      <div class="kpi"><div class="label">综合节能率（对比传统钠灯）</div><div class="value" id="kpiSaving">62.4<small>%</small></div><div class="delta">LED 改造 + 智能调光 + 按需照明</div></div>
+      <div class="kpi warn"><div class="label">未处理告警</div><div class="value"><span id="kpiAlarm">7</span><small>条</small></div><div class="delta">故障自动巡检 · 实时派单</div></div>
+    </section>
+
+    <!-- map + detail -->
+    <section class="grid-mid">
+      <div class="panel">
+        <div class="panel-head">
+          <h2>区域地图 · 世纪大道片区（示意）</h2>
+          <div class="spacer"></div>
+          <div class="legend">
+            <span><i style="background:var(--green)"></i>正常</span>
+            <span><i style="background:var(--amber)"></i>调光节能</span>
+            <span><i style="background:var(--red)"></i>故障</span>
+            <span><i style="background:var(--gray)"></i>离线</span>
+          </div>
+          <button class="btn sm primary" onclick="allLights(100)">全开</button>
+          <button class="btn sm" onclick="allLights(40)">节能模式</button>
+          <button class="btn sm danger" onclick="allLights(0)">全关</button>
+        </div>
+        <div class="map-wrap">
+          <svg id="map" viewBox="0 0 820 500" width="100%" height="470" aria-label="路灯分布地图"></svg>
+        </div>
+        <div style="font-size:12px;color:var(--sub);margin-top:8px;">点击地图上任意灯点可查看单灯详情并远程控制；本片区共 60 盏示意灯位，全区共 1,280 盏。</div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head"><h2>单灯监控</h2><div class="spacer"></div><span style="font-size:12px;color:var(--sub)">NB-IoT 单灯控制器</span></div>
+        <div class="detail-id"><span class="id" id="dId">LD-PD-0101</span><span class="status-badge st-on" id="dStatus">正常运行</span></div>
+        <div class="meta" id="dMeta"></div>
+        <div class="bright-big"><div class="num"><span id="dBright">86</span>%</div><div class="cap">当前亮度</div></div>
+        <input type="range" id="dSlider" min="0" max="100" value="86">
+        <div class="switch-row">
+          <button class="btn primary" id="btnOn">开灯</button>
+          <button class="btn danger" id="btnOff">关灯</button>
+        </div>
+        <div style="font-size:12px;color:var(--sub);margin-bottom:4px;">运行模式</div>
+        <div class="seg" id="dMode">
+          <div data-mode="auto" class="on">自动光感</div><div data-mode="time">时控策略</div><div data-mode="manual">手动</div>
+        </div>
+        <div class="tele">
+          <div class="cell"><div class="k">电压</div><div class="v"><span id="tVolt">221.4</span><small> V</small></div></div>
+          <div class="cell"><div class="k">电流</div><div class="v"><span id="tCurr">0.47</span><small> A</small></div></div>
+          <div class="cell"><div class="k">实时功率</div><div class="v"><span id="tPow">98</span><small> W</small></div></div>
+          <div class="cell"><div class="k">功率因数</div><div class="v"><span id="tPf">0.96</span></div></div>
+          <div class="cell"><div class="k">今日能耗</div><div class="v"><span id="tDay">2.41</span><small> kWh</small></div></div>
+          <div class="cell"><div class="k">累计运行时长</div><div class="v"><span id="tHours">8,412</span><small> h</small></div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- bottom -->
+    <section class="grid-bot">
+      <div class="panel">
+        <div class="panel-head"><h2>能耗趋势 · 今日逐时用电量</h2><div class="spacer"></div><span style="font-size:12px;color:var(--sub)">单位：kWh</span></div>
+        <div id="chart"></div>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><h2>分组控制</h2></div>
+        <div id="groups"></div>
+        <div class="strategy">
+          <b>当前时控策略</b><br>
+          🌇 日落自动开灯（今日 17:42）→ 100% 亮度<br>
+          🌙 22:00 车流下降 → 自动降至 60%<br>
+          🌌 00:00 – 05:00 深夜节能 → 降至 30%<br>
+          🌅 日出自动关灯（明日 06:15）
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><h2>实时告警</h2><div class="spacer"></div><span style="font-size:12px;color:var(--sub)">自动巡检 · 每 5 分钟</span></div>
+        <div class="alert-list" id="alerts"></div>
+      </div>
+    </section>
+    <footer>鸿甯智能 · 智慧路灯云管理平台（演示原型）— 页面数据为模拟生成，用于功能演示</footer>
+  </main>
+</div>
+<div id="toasts"></div>
+<script>
+/* ================= 数据模型（模拟） ================= */
+const ROADS = [
+  { name:"世纪大道", pts:[[30,290],[790,290]], n:16 },
+  { name:"张杨路",   pts:[[50,110],[760,170]], n:12 },
+  { name:"潍坊路",   pts:[[40,420],[780,420]], n:12 },
+  { name:"浦城路",   pts:[[255,70],[255,465]], n:10 },
+  { name:"商城路",   pts:[[540,70],[540,465]], n:10 },
+];
+const lights = [];
+let seq = 0;
+ROADS.forEach(r=>{
+  const [x1,y1]=r.pts[0], [x2,y2]=r.pts[1];
+  const dx=x2-x1, dy=y2-y1, len=Math.hypot(dx,dy), nx=-dy/len, ny=dx/len;
+  for(let i=0;i<r.n;i++){
+    const t=(i+0.5)/r.n, side=i%2?1:-1, off=13*side;
+    seq++;
+    lights.push({
+      id:"LD-PD-"+String(seq).padStart(4,"0"), road:r.name,
+      x:x1+dx*t+nx*off, y:y1+dy*t+ny*off,
+      brightness: 55+Math.round(Math.random()*45),
+      status:"on", mode:"auto",
+      todayKwh: 1.6+Math.random()*1.4, hours: 6000+Math.floor(Math.random()*5000),
+    });
+  }
+});
+// 预置状态：两个故障、两个离线、若干调光
+function setSt(idx, st, br){ const L=lights[idx]; if(!L) return; L.status=st; if(br!==undefined) L.brightness=br; }
+setSt(7,"fault"); setSt(38,"fault"); setSt(21,"offline",0); setSt(52,"offline",0);
+[3,11,17,26,31,44,49,57].forEach(i=>{ const L=lights[i]; if(L&&L.status==="on"){ L.status="dim"; L.brightness=30+Math.round(Math.random()*25);} });
+
+const STATUS_TXT = { on:["正常运行","st-on"], dim:["调光节能","st-dim"], fault:["灯具故障","st-fault"], offline:["设备离线","st-offline"] };
+let selected = lights[0];
+
+/* ================= 地图渲染 ================= */
+const svg = document.getElementById("map");
+const NS = "http://www.w3.org/2000/svg";
+function el(tag, attrs){ const e=document.createElementNS(NS,tag); for(const k in attrs) e.setAttribute(k,attrs[k]); return e; }
+// 地块
+for(let gx=0; gx<8; gx++) for(let gy=0; gy<5; gy++){
+  svg.appendChild(el("rect",{x:18+gx*100, y:16+gy*97, width:88, height:84, rx:8, fill:"#0e1a2e", stroke:"#152642", "stroke-width":1}));
+}
+// 黄浦江
+const river = el("path",{ d:"M795,-10 C760,120 815,240 780,360 C760,430 800,480 790,520 L840,520 L840,-10 Z", fill:"rgba(14,116,144,.35)" });
+svg.appendChild(river);
+const riverTx = el("text",{x:788, y:250, fill:"#3d6f8f", "font-size":13, transform:"rotate(90 792 250)", "letter-spacing":6});
+riverTx.textContent="黄 浦 江"; svg.appendChild(riverTx);
+// 公园/地标
+svg.appendChild(el("rect",{x:600,y:330,width:120,height:70,rx:10,fill:"rgba(45,212,191,.08)",stroke:"rgba(45,212,191,.25)"}));
+const parkTx = el("text",{x:660,y:370,fill:"#3f8272","font-size":12,"text-anchor":"middle"}); parkTx.textContent="世纪公园"; svg.appendChild(parkTx);
+const lm = el("text",{x:120,y:80,fill:"#46638a","font-size":13}); lm.textContent="陆家嘴金融区"; svg.appendChild(lm);
+const lm2 = el("text",{x:600,y:455,fill:"#46638a","font-size":12}); lm2.textContent="上海科技馆"; svg.appendChild(lm2);
+// 道路
+ROADS.forEach(r=>{
+  svg.appendChild(el("line",{x1:r.pts[0][0],y1:r.pts[0][1],x2:r.pts[1][0],y2:r.pts[1][1],stroke:"#22385e","stroke-width":15,"stroke-linecap":"round"}));
+  svg.appendChild(el("line",{x1:r.pts[0][0],y1:r.pts[0][1],x2:r.pts[1][0],y2:r.pts[1][1],stroke:"#314e7d","stroke-width":1.4,"stroke-dasharray":"10 8"}));
+  const mx=(r.pts[0][0]+r.pts[1][0])/2, my=(r.pts[0][1]+r.pts[1][1])/2;
+  const t=el("text",{x:mx, y:my-14, fill:"#5b7ba6","font-size":13,"text-anchor":"middle","letter-spacing":3});
+  t.textContent=r.name; svg.appendChild(t);
+});
+// 灯点
+const dotLayer = el("g",{}); svg.appendChild(dotLayer);
+function colorOf(L){
+  if(L.status==="fault") return "#f87171";
+  if(L.status==="offline") return "#64748b";
+  if(L.status==="dim"||L.brightness<70) return "#fbbf24";
+  return "#34d399";
+}
+function drawLights(){
+  dotLayer.innerHTML="";
+  lights.forEach(L=>{
+    const g = el("g",{class:"light-dot"});
+    if(L.status==="fault") g.appendChild(el("circle",{cx:L.x, cy:L.y, r:7, fill:"none", stroke:"#f87171","stroke-width":1.6, class:"fault-pulse"}));
+    const glowR = L.status==="on"||L.status==="dim" ? 6+L.brightness*0.14 : 0;
+    if(glowR>0) g.appendChild(el("circle",{cx:L.x, cy:L.y, r:glowR, fill:colorOf(L), opacity:0.16}));
+    g.appendChild(el("circle",{cx:L.x, cy:L.y, r:4.4, fill:colorOf(L), stroke: selected===L?"#ffffff":"#0a1120","stroke-width": selected===L?2:1.2}));
+    g.addEventListener("click",()=>selectLight(L));
+    dotLayer.appendChild(g);
+  });
+}
+/* ================= 详情面板 ================= */
+const $ = id=>document.getElementById(id);
+function fmt(n, d=2){ return n.toLocaleString("zh-CN",{minimumFractionDigits:d, maximumFractionDigits:d}); }
+function selectLight(L){
+  selected = L;
+  $("dId").textContent = L.id;
+  const [txt, cls] = STATUS_TXT[L.status];
+  const badge = $("dStatus"); badge.textContent = txt; badge.className = "status-badge "+cls;
+  $("dMeta").innerHTML =
+    `所属道路：<b>${L.road}</b> · 灯杆高度：<b>12 m</b> · 光源：<b>LED 120W</b><br>`+
+    `控制器：<b>NB-IoT 单灯控制器 ZK-200</b> · 安装日期：<b>2024-06-18</b>`;
+  $("dBright").textContent = L.brightness;
+  $("dSlider").value = L.brightness;
+  document.querySelectorAll("#dMode div").forEach(d=>d.classList.toggle("on", d.dataset.mode===L.mode));
+  updateTele(L);
+  drawLights();
+}
+function updateTele(L){
+  const off = L.status==="offline"||L.status==="fault";
+  const pow = off?0:Math.round(120*L.brightness/100*(0.94+Math.random()*0.08));
+  $("tVolt").textContent = L.status==="offline" ? "0.0" : fmt(219+Math.random()*5,1);
+  $("tCurr").textContent = off ? "0.00" : fmt(pow/220*1.02,2);
+  $("tPow").textContent = pow;
+  $("tPf").textContent = off ? "—" : fmt(0.94+Math.random()*0.05,2);
+  $("tDay").textContent = fmt(L.todayKwh,2);
+  $("tHours").textContent = L.hours.toLocaleString("zh-CN");
+}
+$("dSlider").addEventListener("input", e=>{
+  const v = +e.target.value, L = selected;
+  L.brightness = v;
+  if(L.status==="offline"||L.status==="fault"){ toast(`⚠️ ${L.id} 当前${STATUS_TXT[L.status][0]}，调光指令已下发，设备恢复后生效`); }
+  else { L.status = v===0 ? "dim" : (v<70 ? "dim":"on"); if(v===0) L.status="dim"; }
+  $("dBright").textContent = v;
+  const [txt, cls] = STATUS_TXT[L.status]; const b=$("dStatus"); b.textContent=txt; b.className="status-badge "+cls;
+  updateTele(L); drawLights();
+});
+$("dSlider").addEventListener("change", ()=> toast(`✅ 指令已下发：${selected.id} 亮度调至 ${selected.brightness}%（控制器回执正常）`));
+$("btnOn").addEventListener("click", ()=>{ const L=selected; if(L.status==="offline") return toast(`⚠️ ${L.id} 设备离线，指令已排队，待恢复通信后执行`);
+  L.status="on"; L.brightness=Math.max(L.brightness,90); selectLight(L); toast(`✅ ${L.id} 已开灯，亮度 ${L.brightness}%`); });
+$("btnOff").addEventListener("click", ()=>{ const L=selected; if(L.status==="offline") return toast(`⚠️ ${L.id} 设备离线，指令已排队`);
+  L.brightness=0; L.status="dim"; selectLight(L); toast(`✅ ${L.id} 已关灯`); });
+document.querySelectorAll("#dMode div").forEach(d=> d.addEventListener("click", ()=>{
+  selected.mode = d.dataset.mode;
+  document.querySelectorAll("#dMode div").forEach(x=>x.classList.toggle("on", x===d));
+  toast(`✅ ${selected.id} 已切换为「${d.textContent}」模式`);
+}));
+/* ================= 全局/分组控制 ================= */
+function toast(msg){
+  const t=document.createElement("div"); t.className="toast"; t.textContent=msg;
+  $("toasts").appendChild(t); setTimeout(()=>{ t.style.opacity="0"; t.style.transition=".4s"; setTimeout(()=>t.remove(),420); }, 3400);
+}
+function allLights(v){
+  lights.forEach(L=>{ if(L.status==="fault"||L.status==="offline") return; L.brightness=v; L.status = v===0?"dim":(v<70?"dim":"on"); });
+  selectLight(selected); renderGroups();
+  toast(v===0 ? "✅ 片区路灯已全部关闭（故障/离线设备除外）" : v>=100 ? "✅ 片区路灯已全开（100% 亮度）" : `✅ 节能模式已启用：片区亮度统一调至 ${v}%`);
+}
+function renderGroups(){
+  const box = $("groups"); box.innerHTML="";
+  ROADS.forEach(r=>{
+    const members = lights.filter(L=>L.road===r.name && L.status!=="fault" && L.status!=="offline");
+    const avg = members.length? Math.round(members.reduce((s,L)=>s+L.brightness,0)/members.length):0;
+    const row=document.createElement("div"); row.className="group-row";
+    row.innerHTML = `<span class="gname">${r.name}</span><span class="gcount">${r.n} 盏 · 在线</span>
+      <button class="btn sm" data-g="${r.name}" data-v="100">全开</button>
+      <button class="btn sm" data-g="${r.name}" data-v="40">节能</button>
+      <button class="btn sm" data-g="${r.name}" data-v="0">关闭</button>
+      <span class="gbright">${avg}%</span>`;
+    box.appendChild(row);
+  });
+  box.querySelectorAll("button").forEach(b=> b.addEventListener("click", ()=>{
+    const v=+b.dataset.v;
+    lights.forEach(L=>{ if(L.road===b.dataset.g && L.status!=="fault" && L.status!=="offline"){ L.brightness=v; L.status=v===0?"dim":(v<70?"dim":"on"); } });
+    selectLight(selected); renderGroups();
+    toast(`✅ 「${b.dataset.g}」分组指令已下发：亮度 ${v}%`);
+  }));
+}
+/* ================= 告警 ================= */
+let alerts = [
+  { icon:"🔴", cls:"ai-red",   text:"LD-PD-0008 灯具故障（光源无电流）", road:"世纪大道", time:"12:41" },
+  { icon:"🔴", cls:"ai-red",   text:"LD-PD-0039 灯具故障（驱动电源异常）", road:"潍坊路", time:"11:58" },
+  { icon:"⚪", cls:"ai-gray",  text:"LD-PD-0022 控制器离线（NB-IoT 信号丢失）", road:"张杨路", time:"11:23" },
+  { icon:"⚪", cls:"ai-gray",  text:"LD-PD-0053 控制器离线（心跳超时）", road:"商城路", time:"10:47" },
+  { icon:"🟠", cls:"ai-amber", text:"LD-PD-0015 功率异常（低于阈值 18%）", road:"世纪大道", time:"10:12" },
+  { icon:"🟠", cls:"ai-amber", text:"LD-PD-0044 灯杆倾斜告警（倾角 3.2°）", road:"潍坊路", time:"09:36" },
+  { icon:"🟠", cls:"ai-amber", text:"LD-PD-0029 电压波动（253V 超限）", road:"张杨路", time:"08:58" },
+];
+function renderAlerts(){
+  const box=$("alerts"); box.innerHTML="";
+  alerts.forEach((a,i)=>{
+    const d=document.createElement("div"); d.className="alert-item";
+    d.innerHTML=`<div class="alert-ico ${a.cls}">${a.icon}</div>
+      <div><div>${a.text}</div><div class="at">${a.road} · ${a.time} · 已自动生成维修工单</div></div>
+      <button class="btn sm handle">处理</button>`;
+    d.querySelector(".handle").addEventListener("click", ()=>{ alerts.splice(i,1); renderAlerts(); toast("✅ 工单已派发至运维班组（浦东一组），预计 2 小时内到场"); });
+    box.appendChild(d);
+  });
+  $("kpiAlarm").textContent = alerts.length;
+  $("navAlarm").textContent = alerts.length;
+  $("navAlarm").style.display = alerts.length? "flex":"none";
+}
+</script>
+<script>
+/* ================= 能耗图表 ================= */
+(function(){
+  const hours = Array.from({length:24},(_,i)=>i+"时");
+  const smart = [210,150,95,80,80,95,60,15,5,5,5,5,5,5,5,5,12,95,260,315,330,300,265,235];
+  const trad  = [430,430,430,430,430,430,380,60,0,0,0,0,0,0,0,0,40,380,430,430,430,430,430,430];
+  if(!window.echarts){ document.getElementById("chart").innerHTML = '<div style="color:#7d93b2;font-size:13px;padding:20px;">图表组件加载中…（如长时间未显示请刷新页面）</div>'; return; }
+  const chart = echarts.init(document.getElementById("chart"));
+  chart.setOption({
+    backgroundColor:"transparent",
+    tooltip:{ trigger:"axis", backgroundColor:"#122540", borderColor:"#2a4a7f", textStyle:{color:"#dbe7f5"} },
+    legend:{ data:["智能调光（本系统）","传统钠灯（常亮）"], textStyle:{color:"#7d93b2"}, top:0, right:0 },
+    grid:{ left:8, right:14, top:34, bottom:0, containLabel:true },
+    xAxis:{ type:"category", data:hours, axisLabel:{color:"#5f7699", interval:2}, axisLine:{lineStyle:{color:"#22385e"}} },
+    yAxis:{ type:"value", splitLine:{lineStyle:{color:"#16263f"}}, axisLabel:{color:"#5f7699"} },
+    series:[
+      { name:"智能调光（本系统）", type:"line", smooth:true, data:smart, symbol:"circle", symbolSize:5,
+        lineStyle:{width:2.5, color:"#22d3ee"}, itemStyle:{color:"#22d3ee"},
+        areaStyle:{ color:{ type:"linear", x:0,y:0,x2:0,y2:1, colorStops:[{offset:0,color:"rgba(34,211,238,.35)"},{offset:1,color:"rgba(34,211,238,.02)"}] } } },
+      { name:"传统钠灯（常亮）", type:"line", smooth:true, data:trad, symbol:"none",
+        lineStyle:{width:1.6, type:"dashed", color:"#64748b"}, itemStyle:{color:"#64748b"} },
+    ]
+  });
+  window.addEventListener("resize", ()=>chart.resize());
+})();
+
+/* ================= 时钟 & 模拟引擎 ================= */
+function tickClock(){
+  const d = new Date();
+  $("clock").textContent = d.toLocaleDateString("zh-CN") + " " + d.toLocaleTimeString("zh-CN",{hour12:false});
+}
+setInterval(tickClock, 1000); tickClock();
+
+let totalEnergy = 3246.8;
+setInterval(()=>{
+  // 今日能耗缓慢累积（按全区平均功率折算）
+  const online = lights.filter(L=>L.status==="on"||L.status==="dim");
+  const avgBr = online.length? online.reduce((s,L)=>s+L.brightness,0)/online.length : 0;
+  totalEnergy += (1280 * 120 * avgBr/100) / 1000 / 3600 * 2.5 * 0.72;
+  $("kpiEnergy").textContent = totalEnergy.toLocaleString("zh-CN",{minimumFractionDigits:1, maximumFractionDigits:1});
+  // 在线率小幅波动
+  $("kpiOnline").innerHTML = (98.4+Math.random()*0.4).toFixed(1) + "<small>%</small>";
+  // 选中灯遥测刷新
+  if(selected && selected.status!=="offline") { selected.todayKwh += Math.random()*0.004; updateTele(selected); }
+  // 偶发事件：新故障 / 自动恢复
+  const r = Math.random();
+  if(r < 0.06){
+    const cand = lights.filter(L=>L.status==="on"||L.status==="dim");
+    const L = cand[Math.floor(Math.random()*cand.length)];
+    if(L){ L.status="fault"; alerts.unshift({ icon:"🔴", cls:"ai-red", text:`${L.id} 灯具故障（光源无电流）`, road:L.road, time:new Date().toLocaleTimeString("zh-CN",{hour:"2-digit",minute:"2-digit",hour12:false}) });
+      renderAlerts(); if(selected===L) selectLight(L); else drawLights();
+      toast(`🚨 巡检发现新故障：${L.id}（${L.road}），已自动生成维修工单`); }
+  } else if(r < 0.10){
+    const f = lights.find(L=>L.status==="fault");
+    if(f){ f.status="on"; f.brightness=85; alerts = alerts.filter(a=>!a.text.includes(f.id)); renderAlerts(); drawLights();
+      toast(`✅ ${f.id} 故障已由运维班组修复并重新上线`); }
+  }
+}, 2500);
+
+/* ================= 初始化 ================= */
+document.querySelectorAll("[data-demo]").forEach(n=> n.addEventListener("click", ()=> toast("演示原型：该功能已集成在「运行总览」页展示，正式版为独立模块")));
+selectLight(lights[0]);
+renderGroups();
+renderAlerts();
+drawLights();
+setTimeout(()=>toast("👋 欢迎使用智慧路灯云管理平台演示系统：点击地图灯点可单灯调光，分组控制与告警处理均可交互演示"), 600);
+</script>
+</body>
+</html>

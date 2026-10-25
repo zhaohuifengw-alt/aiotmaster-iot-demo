@@ -33,6 +33,8 @@
 </div>
 
 <script>
+const _s = new URLSearchParams(location.search).get("scene");
+if (_s === "light") { location.replace("light/index.html"); }
 const SCENES = {
   water: {
     name: "智慧水务 · 供水管网监控",
