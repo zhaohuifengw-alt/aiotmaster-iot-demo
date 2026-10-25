@@ -577,17 +577,17 @@ const S = SCENES[scene] || SCENES.water;
 /* 真实地点锚：中心点为公开坐标，节点为演示点位（示意分布） */
 const PLACES = {
   water: { center: [31.2552, 121.4747], zoom: 12, place: "上海市浦东新区", scale: 0.0016 },
-  fire: { center: [31.2402, 121.4981], zoom: 14, place: "上海市陆家嘴", scale: 0.0004 },
-  park: { center: [31.2053, 121.6143], zoom: 13, place: "上海张江科学城", scale: 0.0008 },
+  fire: { center: [31.2402, 121.4981], zoom: 16, place: "上海市陆家嘴", scale: 0.0001 },
+  park: { center: [31.2053, 121.6143], zoom: 15, place: "上海张江科学城", scale: 0.0002 },
   farm: { center: [36.857, 118.791], zoom: 12, place: "山东省寿光市", scale: 0.002 },
-  community: { center: [31.2552, 121.4747], zoom: 14, place: "上海市中心城区", scale: 0.0004 },
+  community: { center: [31.2552, 121.4747], zoom: 16, place: "上海市中心城区", scale: 0.00006 },
   traffic: { center: [31.2552, 121.4747], zoom: 13, place: "上海市中心城区", scale: 0.0008 },
   ship: { place: "上海 — 新加坡航线" },
-  company: { center: [31.2552, 121.4747], zoom: 14, place: "上海市中心城区", scale: 0.0004 },
+  company: { center: [31.2552, 121.4747], zoom: 16, place: "上海市中心城区", scale: 0.00006 },
   mine: { center: [38.8194, 110.4897], zoom: 12, place: "陕西省神木市", scale: 0.002 },
-  oil: { center: [29.96, 121.72], zoom: 13, place: "浙江省宁波市镇海区", scale: 0.0008 },
-  warehouse: { center: [29.3069, 120.0753], zoom: 12, place: "浙江省义乌市", scale: 0.0016 },
-  factory: { center: [30.8702, 121.7688], zoom: 15, place: "特斯拉上海超级工厂（临港）", scale: 0.0002 },
+  oil: { center: [29.96, 121.72], zoom: 15, place: "浙江省宁波市镇海区", scale: 0.00012 },
+  warehouse: { center: [29.3069, 120.0753], zoom: 15, place: "浙江省义乌市", scale: 0.0002 },
+  factory: { center: [30.8702, 121.7688], zoom: 16, place: "特斯拉上海超级工厂（临港）", scale: 0.00008 },
   oilfield: { center: [37.5014, 118.4973], zoom: 12, place: "山东省东营市胜利油田", scale: 0.002 },
   pipegallery: { center: [30.8702, 121.7688], zoom: 13, place: "上海市临港新片区", scale: 0.0008 },
   gas: { center: [31.2552, 121.4747], zoom: 12, place: "上海市中心城区", scale: 0.0016 },
@@ -637,11 +637,6 @@ function nodeLL(n) {
   const sc = P.scale || 0.001;
   return gcj(P.center[0] + (n.y - 50) * sc, P.center[1] + (n.x - 50) * sc / Math.cos(P.center[0] * Math.PI / 180));
 }
-function linkLL(l) {
-  const sc = P.scale || 0.001;
-  const cv = (x, y) => gcj(P.center[0] + (y - 50) * sc, P.center[1] + (x - 50) * sc / Math.cos(P.center[0] * Math.PI / 180));
-  return [cv(l[0], l[1]), cv(l[2], l[3])];
-}
 
 let selId = S.nodes[0].id;
 const nodeById = id => S.nodes.find(n => n.id === id);
@@ -650,8 +645,9 @@ let leafMap = null, leafMarkers = {}, leafStatic = null, leafViewSet = false;
 function mkIcon(n) {
   const cls = statusCls(n);
   const icon = n.kind === "ship" ? "🚢 " : n.kind === "port" ? "⚓ " : "";
-  return L.divIcon({ className: "mk-wrap", iconSize: [110, 34], iconAnchor: [55, 8],
-    html: `<div class="mk-dot mk-${cls} ${n.id === selId ? "sel" : ""}"></div><div class="mk-label">${icon}${n.name}</div>` });
+  const t0 = n.tele && n.tele[0] ? `<div class="mk-sub">${n.tele[0].l} ${fmt(n.tele[0].v)}${n.tele[0].u || ""}</div>` : "";
+  return L.divIcon({ className: "mk-wrap", iconSize: [120, 48], iconAnchor: [60, 8],
+    html: `<div class="mk-dot mk-${cls} ${n.id === selId ? "sel" : ""}"></div><div class="mk-label">${icon}${n.name}</div>${t0}` });
 }
 function renderMap() {
   const wrap = document.getElementById("mapWrap");
@@ -659,9 +655,9 @@ function renderMap() {
   if (!leafMap) {
     leafMap = L.map(wrap, { scrollWheelZoom: false });
     L.tileLayer("https://webrd0{s}.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=1&style=8&x={x}&y={y}&z={z}", { subdomains: "1234", attribution: "© 高德地图" }).addTo(leafMap);
+    L.control.scale({ imperial: false }).addTo(leafMap);
     leafStatic = L.layerGroup().addTo(leafMap);
     if (S.routes) S.routes.forEach(r => { L.polyline(r.pts.map(p => gcj(p[0], p[1])), { color: "#38bdf8", weight: 2, dashArray: "8 6", opacity: 0.85 }).addTo(leafStatic); });
-    if (S.links) S.links.forEach(l => { const [a, b] = linkLL(l); L.polyline([a, b], { color: "#3b82f6", weight: 1.5, opacity: 0.55 }).addTo(leafStatic); });
   }
   S.nodes.forEach(n => {
     const ll = nodeLL(n);
